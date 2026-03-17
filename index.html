@@ -638,7 +638,18 @@ let data = {
   ]
 };
 
-let activeRoom = "Kitchen", filterMode = "needed", expandedKey = null, nextId = 400;
+// Load persisted data from localStorage, fall back to defaults
+const SAVED = localStorage.getItem("aptTracker_data");
+if (SAVED) { try { data = JSON.parse(SAVED); } catch(e) {} }
+const SAVED_ID = localStorage.getItem("aptTracker_nextId");
+let nextId = SAVED_ID ? parseInt(SAVED_ID) : 400;
+
+function saveData() {
+  localStorage.setItem("aptTracker_data", JSON.stringify(data));
+  localStorage.setItem("aptTracker_nextId", String(nextId));
+}
+
+let activeRoom = "Kitchen", filterMode = "needed", expandedKey = null;
 
 function pp(p){ const n=parseFloat(String(p).replace(/[^0-9.]/g,"")); return isNaN(n)?0:n; }
 function roomTotal(r){ return data[r].filter(i=>i.price).reduce((s,i)=>s+pp(i.price),0); }
@@ -681,25 +692,25 @@ function toggleExpand(key){
 
 function toggleBought(r,id){
   const item=data[r].find(i=>i.id===id);
-  if(item){item.bought=!item.bought; renderAll();}
+  if(item){item.bought=!item.bought; saveData(); renderAll();}
 }
 
 function updateField(r,id,field,val){
   const item=data[r].find(i=>i.id===id);
-  if(item){item[field]=val; renderTotals(); renderHeroStats();}
+  if(item){item[field]=val; saveData(); renderTotals(); renderHeroStats();}
 }
 
 function removeItem(r,id){
   data[r]=data[r].filter(i=>i.id!==id);
   if(expandedKey===`${r}-${id}`)expandedKey=null;
-  renderAll();
+  saveData(); renderAll();
 }
 
 function addItem(){
   const inp=document.getElementById("new-item");
   const name=inp.value.trim(); if(!name)return;
   data[activeRoom].push({id:nextId++,name,est:"",bought:false,url:"",price:"",note:"",options:[]});
-  inp.value=""; renderAll();
+  inp.value=""; saveData(); renderAll();
 }
 
 function renderRoomNav(){
@@ -757,19 +768,19 @@ function addOption(r,id){
   const item=data[r].find(i=>i.id===id);
   if(!item) return;
   item.options.push({label:"New option",url:"",price:"",note:""});
-  renderItems();
+  saveData(); renderItems();
 }
 function removeOption(r,id,oi){
   const item=data[r].find(i=>i.id===id);
   if(!item) return;
   item.options.splice(oi,1);
-  renderItems(); renderTotals(); renderHeroStats();
+  saveData(); renderItems(); renderTotals(); renderHeroStats();
 }
 function updateOption(r,id,oi,field,val){
   const item=data[r].find(i=>i.id===id);
   if(!item) return;
   item.options[oi][field]=val;
-  renderTotals(); renderHeroStats();
+  saveData(); renderTotals(); renderHeroStats();
 }
 
 function itemDisplayPrice(item){
