@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,17 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --cream: #F7F4EF;
-    --ink: #1C1917;
-    --muted: #78716C;
-    --border: #E5E0D8;
+    --cream: #F0FAFA;
+    --ink: #0A2525;
+    --muted: #4A8080;
+    --border: #A8D8D8;
     --white: #FFFFFF;
-    --accent: #C26B3F;
-    --accent-light: #F5E6DC;
-    --green: #3A7D5B;
-    --green-light: #DFF0E8;
-    --blue: #2E6B9E;
-    --blue-light: #DDEDF8;
+    --accent: #0ABAB5;
+    --accent-light: #C8F0EE;
+    --pink: #FF0090;
+    --pink-light: #FFD6F0;
+    --teal-dark: #008B87;
     --serif: 'DM Serif Display', Georgia, serif;
     --sans: 'DM Sans', system-ui, sans-serif;
   }
@@ -51,7 +51,7 @@
     color: var(--ink);
     letter-spacing: -0.3px;
   }
-  .nav-brand span { color: var(--accent); font-style: italic; }
+  .nav-brand span { color: var(--pink); font-style: italic; }
   .nav-total {
     display: flex;
     align-items: center;
@@ -61,12 +61,12 @@
   .nav-total-num {
     font-family: var(--serif);
     font-size: 22px;
-    color: var(--accent);
+    color: var(--pink);
   }
 
   /* HERO */
   .hero {
-    background: var(--ink);
+    background: linear-gradient(135deg, #008B87 0%, #0ABAB5 100%);
     color: var(--white);
     padding: 56px 40px 48px;
     position: relative;
@@ -80,8 +80,8 @@
     width: 300px;
     height: 300px;
     border-radius: 50%;
-    background: var(--accent);
-    opacity: 0.08;
+    background: var(--pink);
+    opacity: 0.15;
   }
   .hero-eyebrow {
     font-size: 11px;
@@ -96,7 +96,7 @@
     line-height: 1.1;
     margin-bottom: 8px;
   }
-  .hero-title em { color: var(--accent); font-style: italic; }
+  .hero-title em { color: #F9B8D5; font-style: italic; }
   .hero-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 36px; font-weight: 300; }
   .hero-stats {
     display: flex;
@@ -184,7 +184,7 @@
   .room-total-num {
     font-family: var(--serif);
     font-size: 28px;
-    color: var(--accent);
+    color: var(--pink);
     display: block;
     margin-top: 2px;
   }
@@ -246,9 +246,18 @@
     overflow: hidden;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .item-card:hover { border-color: #C8BFB5; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .item-card:hover { border-color: var(--border); box-shadow: 0 2px 8px rgba(26,158,120,0.08); }
   .item-card.expanded { border-color: var(--accent); }
   .item-card.skipped { opacity: 0.38; }
+  .badge-est {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #EEF6FF;
+    color: #4A7FA5;
+    white-space: nowrap;
+    font-weight: 400;
+  }
   .item-main {
     display: flex;
     align-items: center;
@@ -275,12 +284,12 @@
     white-space: nowrap;
   }
   .badge-price {
-    background: var(--green-light);
-    color: var(--green);
+    background: var(--accent-light);
+    color: var(--accent);
   }
   .badge-link {
-    background: var(--blue-light);
-    color: var(--blue);
+    background: var(--pink-light);
+    color: var(--pink);
     text-decoration: none;
   }
   .btn-details {
@@ -418,8 +427,18 @@
 <nav>
   <div class="nav-brand">nest<span>list</span></div>
   <div class="nav-total">
-    <span class="nav-total-label">total budgeted</span>
-    <span class="nav-total-num" id="grand-total">$0</span>
+    <div style="text-align:right;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;">
+        <div>
+          <div class="nav-total-label">estimated range</div>
+          <div class="nav-total-num" id="nav-est" style="color:var(--muted);font-size:14px;">—</div>
+        </div>
+        <div>
+          <div class="nav-total-label">actual spend</div>
+          <div class="nav-total-num" id="grand-total">$0.00</div>
+        </div>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -448,12 +467,24 @@
 <main class="main">
   <div class="room-header">
     <div>
-      <h2 class="room-title" id="room-title">Kitchen</h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <h2 class="room-title" id="room-title">Kitchen</h2>
+        <div id="room-theme-swatch" style="height:18px;width:60px;border-radius:99px;"></div>
+      </div>
+      <div id="room-theme-label" style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;"></div>
       <div class="room-meta" id="room-meta"></div>
     </div>
     <div class="room-total-card">
-      <div class="room-total-label">room total</div>
-      <span class="room-total-num" id="room-total">$0</span>
+      <div style="display:flex;gap:20px;">
+        <div>
+          <div class="room-total-label">estimated</div>
+          <span class="room-total-num" id="room-est" style="font-size:14px;color:var(--muted);">—</span>
+        </div>
+        <div style="text-align:right;">
+          <div class="room-total-label">actual</div>
+          <span class="room-total-num" id="room-total">$0</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -481,65 +512,129 @@
 </main>
 
 <script>
-const ROOMS = ["Kitchen","Bathroom","Bedroom","Living Room"];
+const ROOMS = ["Kitchen","Bathroom","Bedroom","Living Room","Balcony","Cleaning"];
+
+const ROOM_THEMES = {
+  Kitchen: {
+    a: "#7A9E7E", aLight: "#E8F3E9", b: "#9B84B8", bLight: "#EDE5F6",
+    label: "sage + lavender", gradient: "linear-gradient(135deg,#7A9E7E,#9B84B8)"
+  },
+  Bathroom: {
+    a: "#0ABAB5", aLight: "#C8F0EE", b: "#FF0090", bLight: "#FFD6F0",
+    label: "teal + hot pink", gradient: "linear-gradient(135deg,#0ABAB5,#FF0090)"
+  },
+  Bedroom: {
+    a: "#5BC8C8", aLight: "#D6F4F4", b: "#F4A0BF", bLight: "#FDE8F1",
+    label: "light teal + blush pink", gradient: "linear-gradient(135deg,#5BC8C8,#F4A0BF)"
+  },
+  "Living Room": {
+    a: "#8A8FA8", aLight: "#E4E6ED", b: "#FF69A0", bLight: "#FFE0EE",
+    label: "grey + pink accents", gradient: "linear-gradient(135deg,#8A8FA8,#FF69A0)"
+  },
+  Balcony: {
+    a: "#0ABAB5", aLight: "#C8F0EE", b: "#9B84B8", bLight: "#EDE5F6",
+    label: "teal + lavender", gradient: "linear-gradient(135deg,#0ABAB5,#9B84B8)"
+  },
+  Cleaning: {
+    a: "#5B9EC9", aLight: "#D6EDF8", b: "#76C893", bLight: "#D8F3E0",
+    label: "clean blue + fresh green", gradient: "linear-gradient(135deg,#5B9EC9,#76C893)"
+  }
+};
+
 let data = {
   Kitchen: [
-    {id:1,name:"Dish set (4-place setting)",bought:false,url:"",price:"",note:""},
-    {id:2,name:"Pots & pans set",bought:false,url:"",price:"",note:""},
-    {id:3,name:"Chef's knife",bought:false,url:"",price:"",note:""},
-    {id:4,name:"Cutting board",bought:false,url:"",price:"",note:""},
-    {id:5,name:"Utensil set",bought:false,url:"",price:"",note:""},
-    {id:6,name:"Mixing bowls",bought:false,url:"",price:"",note:""},
-    {id:7,name:"Colander",bought:false,url:"",price:"",note:""},
-    {id:8,name:"Can opener",bought:false,url:"",price:"",note:""},
-    {id:9,name:"Measuring cups & spoons",bought:false,url:"",price:"",note:""},
-    {id:10,name:"Dish drying rack",bought:false,url:"",price:"",note:""},
-    {id:11,name:"Kitchen trash can",bought:false,url:"",price:"",note:""},
-    {id:12,name:"Coffee maker",bought:false,url:"",price:"",note:""},
-    {id:13,name:"Toaster",bought:false,url:"",price:"",note:""},
-    {id:14,name:"Food storage containers",bought:false,url:"",price:"",note:""},
-    {id:15,name:"Paper towel holder",bought:false,url:"",price:"",note:""},
+    {id:1,name:"Dish set (4-place setting)",est:"$30–$60",bought:false,url:"",price:"",note:"",options:[]},
+    {id:2,name:"Pots & pans set",est:"$120–$200",bought:false,url:"",price:"",note:"Nice set — Made In, Caraway, or similar",options:[]},
+    {id:3,name:"Chef's knife",est:"$30–$60",bought:false,url:"",price:"",note:"",options:[]},
+    {id:28,name:"Knife set + block",est:"$40–$100",bought:false,url:"",price:"",note:"",options:[]},
+    {id:4,name:"Cutting board",est:"$20–$35",bought:false,url:"",price:"",note:"",options:[]},
+    {id:5,name:"Utensil set",est:"$15–$25",bought:false,url:"",price:"",note:"",options:[]},
+    {id:6,name:"Utensil holder",est:"$12–$25",bought:false,url:"",price:"",note:"",options:[]},
+    {id:7,name:"Silverware + holder",est:"$30–$55",bought:false,url:"",price:"",note:"",options:[]},
+    {id:8,name:"Mixing bowls",est:"$20–$40",bought:false,url:"",price:"",note:"",options:[]},
+    {id:9,name:"Colander",est:"$12–$20",bought:false,url:"",price:"",note:"",options:[]},
+    {id:10,name:"Can opener",est:"$10–$15",bought:false,url:"",price:"",note:"",options:[]},
+    {id:11,name:"Measuring cups & spoons",est:"$12–$20",bought:false,url:"",price:"",note:"",options:[]},
+    {id:12,name:"Kitchen trash can",est:"$25–$50",bought:false,url:"",price:"",note:"",options:[]},
+    {id:13,name:"Toaster",est:"$25–$45",bought:false,url:"",price:"",note:"",options:[]},
+    {id:14,name:"Spice rack",est:"$20–$40",bought:false,url:"",price:"",note:"",options:[]},
+    {id:15,name:"Salt & pepper shakers",est:"$12–$25",bought:false,url:"",price:"",note:"",options:[]},
+    {id:16,name:"Coffee bean grinder",est:"$35–$70",bought:false,url:"",price:"",note:"",options:[]},
+    {id:17,name:"Water kettle",est:"$30–$55",bought:false,url:"",price:"",note:"",options:[]},
+    {id:18,name:"Pour over coffee maker",est:"$25–$45",bought:false,url:"",price:"",note:"Maybe — check if you still want after getting grinder",options:[]},
+    {id:26,name:"Island stools (x2–4)",est:"$80–$200",bought:false,url:"",price:"",note:"No dining table — these are it",options:[]},
+    {id:27,name:"Kitchen towels",est:"$10–$25",bought:false,url:"",price:"",note:"",options:[]},
+    {id:19,name:"Mugs",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:20,name:"Tupperware / food storage",est:"$20–$50",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:21,name:"Paper towel holder",est:"$10–$30",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:22,name:"Dish drying rack",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:23,name:"French press",est:"$20–$50",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:24,name:"Food scale",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:25,name:"Air fryer",est:"$50–$120",bought:true,url:"",price:"",note:"Already have",options:[]},
   ],
   Bathroom: [
-    {id:1,name:"Bath towels (x4)",bought:false,url:"",price:"",note:""},
-    {id:2,name:"Hand towels (x2)",bought:false,url:"",price:"",note:""},
-    {id:3,name:"Bath mat",bought:false,url:"",price:"",note:""},
-    {id:4,name:"Shower curtain + liner",bought:false,url:"",price:"",note:""},
-    {id:5,name:"Shower curtain rings",bought:false,url:"",price:"",note:""},
-    {id:6,name:"Toilet brush & holder",bought:false,url:"",price:"",note:""},
-    {id:7,name:"Bathroom trash can",bought:false,url:"",price:"",note:""},
-    {id:8,name:"Soap dispenser",bought:false,url:"",price:"",note:""},
-    {id:9,name:"Mirror",bought:false,url:"",price:"",note:""},
-    {id:10,name:"Storage / shelving",bought:false,url:"",price:"",note:""},
+    {id:1,name:"Bath towels (x4)",est:"$35–$60",bought:false,url:"https://www.amazon.com/dp/B07Z5X3HMY",price:"35",note:"Chakir Turkish Linens 4-pack — choose white or grey",options:[]},
+    {id:2,name:"Hand towels (x2)",est:"$15–$25",bought:false,url:"",price:"",note:"",options:[]},
+    {id:3,name:"Shower liner",est:"$8–$15",bought:false,url:"https://www.amazon.com/s?k=AmazerBath+72x72+PEVA+shower+liner",price:"10",note:"AmazerBath 72x72 PEVA — clear, with magnets",options:[]},
+    {id:4,name:"Toilet brush & plunger set",est:"$20–$30",bought:false,url:"https://www.amazon.com/Bath-Bliss-Toilet-Plunger-Stainless/dp/B09SZSBDQS",price:"24.99",note:"Bath Bliss stainless set — brush + plunger combo",options:[]},
+    {id:5,name:"Bathroom trash can",est:"$25–$35",bought:false,url:"https://www.amazon.com/TIPGO-Automatic-Bathroom-Touchless-Wastebasket/dp/B0CKY276T3",price:"26.99",note:"TIPGO touchless automatic — normally $29, on sale",options:[]},
+    {id:6,name:"Organizer containers",est:"$15–$35",bought:false,url:"",price:"",note:"Hold off for now — figure out layout first",options:[]},
+    {id:7,name:"Bath mat",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:8,name:"Shower curtain rings",est:"$8–$20",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:9,name:"Soap dispenser",est:"$8–$25",bought:true,url:"",price:"",note:"Already have",options:[]},
   ],
   Bedroom: [
-    {id:1,name:"Bed frame",bought:false,url:"",price:"",note:""},
-    {id:2,name:"Mattress",bought:false,url:"",price:"",note:""},
-    {id:3,name:"Mattress protector",bought:false,url:"",price:"",note:""},
-    {id:4,name:"Pillows",bought:false,url:"",price:"",note:""},
-    {id:5,name:"Sheet set",bought:false,url:"",price:"",note:""},
-    {id:6,name:"Duvet / comforter",bought:false,url:"",price:"",note:""},
-    {id:7,name:"Duvet cover",bought:false,url:"",price:"",note:""},
-    {id:8,name:"Dresser",bought:false,url:"",price:"",note:""},
-    {id:9,name:"Nightstand(s)",bought:false,url:"",price:"",note:""},
-    {id:10,name:"Lamp(s)",bought:false,url:"",price:"",note:""},
-    {id:11,name:"Closet organizer",bought:false,url:"",price:"",note:""},
-    {id:12,name:"Hangers (set)",bought:false,url:"",price:"",note:""},
-    {id:13,name:"Blackout curtains",bought:false,url:"",price:"",note:""},
-    {id:14,name:"Full-length mirror",bought:false,url:"",price:"",note:""},
+    {id:1,name:"Bed frame",est:"$200–$530",bought:false,url:"",price:"",note:"",options:[
+      {label:"Mercer41 Pravesh set (includes nightstand, chest, dresser)",url:"https://www.wayfair.com/furniture/pdp/mercer41-pravesh-corduroy-4-pieces-bedroom-set-w111373115.html",price:"529.99",note:"4-pc set — on sale from $789",options:[]},
+    ]},
+    {id:2,name:"Mattress",est:"$0–$1,000",bought:false,url:"",price:"",note:"TBD — have one currently, may upgrade",options:[]},
+    {id:3,name:"Mattress protector",est:"$25–$45",bought:false,url:"",price:"",note:"",options:[]},
+    {id:4,name:"Pillows",est:"$30–$60",bought:false,url:"",price:"",note:"",options:[]},
+    {id:5,name:"Body pillow",est:"$25–$50",bought:false,url:"",price:"",note:"",options:[]},
+    {id:6,name:"Sheet set — cream / off white",est:"$40–$80",bought:false,url:"",price:"",note:"Have light pink set already",options:[]},
+    {id:7,name:"Quilt",est:"$60–$120",bought:false,url:"https://www.amazon.com/MarCielo-Oversized-Bedspread-Lightweight-Embroidery/dp/B09Z61DTMR",price:"115",note:"List price $154.99 — currently on sale! Buy while it's down.",options:[]},
+    {id:8,name:"Throw blanket",est:"$25–$45",bought:false,url:"https://www.amazon.com/gp/product/B088WYYH85",price:"39.99",note:"Ivory — list price $55.49, currently on sale!",options:[]},
+    {id:9,name:"Dresser",est:"$150–$300",bought:false,url:"",price:"",note:"White or light grey — included in Pravesh set",options:[]},
+    {id:10,name:"Nightstand(s)",est:"$60–$120",bought:false,url:"",price:"",note:"Included in Pravesh set",options:[]},
+    {id:11,name:"Chest / extra storage",est:"$80–$180",bought:false,url:"",price:"",note:"Included in Pravesh set",options:[]},
+    {id:12,name:"Lamp(s)",est:"$30–$60",bought:false,url:"",price:"",note:"",options:[]},
+    {id:13,name:"Hangers (set)",est:"$12–$20",bought:false,url:"",price:"",note:"",options:[]},
   ],
   "Living Room": [
-    {id:1,name:"Sofa / couch",bought:false,url:"",price:"",note:""},
-    {id:2,name:"Coffee table",bought:false,url:"",price:"",note:""},
-    {id:3,name:"TV stand / media console",bought:false,url:"",price:"",note:""},
-    {id:4,name:"TV",bought:false,url:"",price:"",note:""},
-    {id:5,name:"Area rug",bought:false,url:"",price:"",note:""},
-    {id:6,name:"Floor lamp",bought:false,url:"",price:"",note:""},
-    {id:7,name:"Throw blanket",bought:false,url:"",price:"",note:""},
-    {id:8,name:"Decorative pillows",bought:false,url:"",price:"",note:""},
-    {id:9,name:"Bookshelf",bought:false,url:"",price:"",note:""},
-    {id:10,name:"Side table",bought:false,url:"",price:"",note:""},
-    {id:11,name:"Wall art / decor",bought:false,url:"",price:"",note:""},
+    {id:1,name:"Sofa / sectional with chaise",est:"$400–$800",bought:false,url:"",price:"",note:"Grey L-shaped with chaise",options:[
+      {label:"Living Spaces — Bradley charcoal grey modern 81\" with reversible chaise",url:"https://www.livingspaces.com/departments/furniture/living-room/sofas-and-sectionals/sectional-sofas/grey-sofa-chaise-p135269-a12~108-a25~664",price:"",note:"Under $800, ships fast"},
+      {label:"Wayfair — grey sectionals under $500 (browse)",url:"https://www.wayfair.com/furniture/sb2/grey-sectionals-under-500-c413893-a2483~275658-p2490~0~500.html",price:"",note:"Lots of linen/fabric options with reversible chaise"},
+    ]},
+    {id:2,name:"Coffee table",est:"$80–$180",bought:false,url:"",price:"",note:"White or grey, modern, lower shelf ideal",options:[
+      {label:"Wayfair — modern white coffee tables (browse)",url:"https://www.wayfair.com/furniture/sb2/modern-white-coffee-tables-c414602-a75130~274156-a154690~516709.html",price:"",note:"Lots of clean minimalist options $80–$150"},
+    ]},
+    {id:3,name:"TV stand / media console",est:"$100–$200",bought:false,url:"",price:"",note:"White or grey to match coffee table",options:[]},
+    {id:4,name:"TV (65\"–75\")",est:"$400–$550",bought:false,url:"",price:"",note:"",options:[
+      {label:"Samsung 65\" Q7F QLED — Best Buy",url:"https://www.bestbuy.com/site/searchpage.jsp?browsedCategory=pcmcat1539183860210",price:"499",note:"Tom's Guide top budget pick — decent picture, Roku built in"},
+      {label:"Hisense 65\" QD7 Mini-LED QLED — Best Buy",url:"https://www.bestbuy.com/site/hisense-65-class-qd7-series-miniled-qled-4k-uhd-hdr-smart-fire-tv-2025/6613429.p",price:"437.99",note:"Was $599 — Mini-LED tech at this price is a steal"},
+    ]},
+    {id:5,name:"Area rug (8x10)",est:"$100–$185",bought:false,url:"https://www.wayfair.com/rugs/pdp/trent-austin-design-mcglade-pinkcream-area-rug-w000987812.html",price:"",note:"Trent Austin Design McGlade Pink/Cream — size TBD, ~$100–185",options:[
+      {label:"Trent Austin Design McGlade Pink/Cream — Wayfair",url:"https://www.wayfair.com/rugs/pdp/trent-austin-design-mcglade-pinkcream-area-rug-w000987812.html",price:"",note:"Decide on size first — price varies by size"},
+    ]},
+    {id:6,name:"LED lights",est:"$20–$60",bought:false,url:"",price:"",note:"Floor/corner LED, color changing, remote or app controlled",options:[
+      {label:"Govee LED Floor Lamp — Amazon",url:"https://www.amazon.com/s?k=Govee+LED+floor+lamp+color+changing",price:"",note:"~$30–50, color changing, app controlled, very popular"},
+      {label:"LED Corner Lamp — Amazon (browse)",url:"https://www.amazon.com/s?k=LED+corner+floor+lamp+color+changing+rgb",price:"",note:"Lots of options, look for RGB + remote or Alexa compatible"},
+    ]},
+    {id:7,name:"Throw blanket",est:"$25–$45",bought:false,url:"",price:"",note:"Pink or grey",options:[]},
+    {id:8,name:"Decorative pillows",est:"$30–$60",bought:false,url:"",price:"",note:"Pink and grey mix",options:[]},
+  ],
+  Balcony: [
+    {id:1,name:"Outdoor chairs (x2)",est:"$80–$160",bought:false,url:"",price:"",note:"",options:[]},
+    {id:2,name:"Small side table",est:"$35–$70",bought:false,url:"",price:"",note:"",options:[]},
+    {id:3,name:"Outdoor rug / mat",est:"$30–$60",bought:false,url:"",price:"",note:"",options:[]},
+    {id:4,name:"String lights",est:"$15–$30",bought:false,url:"",price:"",note:"Vibe essential",options:[]},
+  ],
+  Cleaning: [
+    {id:1,name:"Vacuum",est:"$60–$150",bought:false,url:"",price:"",note:"",options:[]},
+    {id:2,name:"Broom & dustpan",est:"$15–$30",bought:false,url:"",price:"",note:"",options:[]},
+    {id:3,name:"Swiffer",est:"$30–$50",bought:false,url:"",price:"",note:"",options:[]},
+    {id:4,name:"Cleaning rags",est:"$10–$20",bought:false,url:"",price:"",note:"",options:[]},
+    {id:5,name:"Dish brush",est:"$8–$15",bought:false,url:"",price:"",note:"",options:[]},
   ]
 };
 
@@ -549,6 +644,26 @@ function pp(p){ const n=parseFloat(String(p).replace(/[^0-9.]/g,"")); return isN
 function roomTotal(r){ return data[r].filter(i=>i.price).reduce((s,i)=>s+pp(i.price),0); }
 function grandTotal(){ return ROOMS.reduce((s,r)=>s+roomTotal(r),0); }
 function allItems(){ return ROOMS.flatMap(r=>data[r]); }
+
+function parseEstRange(est){
+  if(!est) return {lo:0,hi:0};
+  const nums = est.replace(/,/g,"").match(/\d+/g);
+  if(!nums||nums.length<2) return {lo:0,hi:0};
+  return {lo:parseInt(nums[0]),hi:parseInt(nums[1])};
+}
+function roomEstRange(r){
+  const unbought = data[r].filter(i=>!i.bought&&!i.price&&i.est);
+  const priced = data[r].filter(i=>!i.bought&&i.price);
+  let lo=0,hi=0;
+  unbought.forEach(i=>{ const e=parseEstRange(i.est); lo+=e.lo; hi+=e.hi; });
+  priced.forEach(i=>{ lo+=pp(i.price); hi+=pp(i.price); });
+  return {lo,hi};
+}
+function grandEstRange(){
+  let lo=0,hi=0;
+  ROOMS.forEach(r=>{ const e=roomEstRange(r); lo+=e.lo; hi+=e.hi; });
+  return {lo,hi};
+}
 
 function setFilter(f){
   filterMode=f;
@@ -583,7 +698,7 @@ function removeItem(r,id){
 function addItem(){
   const inp=document.getElementById("new-item");
   const name=inp.value.trim(); if(!name)return;
-  data[activeRoom].push({id:nextId++,name,bought:false,url:"",price:"",note:""});
+  data[activeRoom].push({id:nextId++,name,est:"",bought:false,url:"",price:"",note:"",options:[]});
   inp.value=""; renderAll();
 }
 
@@ -591,9 +706,11 @@ function renderRoomNav(){
   document.getElementById("room-nav").innerHTML=ROOMS.map(r=>{
     const t=roomTotal(r);
     const isA=r===activeRoom;
-    return `<button class="room-tab${isA?" active":""}" onclick="setRoom('${r.replace(/'/g,"\\'")}')">
+    const theme=ROOM_THEMES[r];
+    const activeStyle=isA?`background:${theme.a};color:#fff;border-bottom-color:${theme.a};`:"";
+    return `<button class="room-tab${isA?" active":""}" style="${activeStyle}" onclick="setRoom('${r.replace(/'/g,"\\'")}')">
       ${r}
-      ${t>0?`<span class="tab-amount">$${Math.round(t)}</span>`:`<span class="tab-amount" style="opacity:0">$0</span>`}
+      ${t>0?`<span class="tab-amount" style="${isA?"color:rgba(255,255,255,0.8)":""}"">$${Math.round(t)}</span>`:`<span class="tab-amount" style="opacity:0">$0</span>`}
     </button>`;
   }).join("");
 }
@@ -605,10 +722,17 @@ function renderRoomHeader(){
   const linked=items.filter(i=>i.url);
   const trackedAll=items.filter(i=>i.url||i.price);
   const prog=items.length?Math.round(trackedAll.length/items.length*100):0;
+  const theme=ROOM_THEMES[activeRoom];
+  const est=roomEstRange(activeRoom);
+  const actual=roomTotal(activeRoom);
   document.getElementById("room-title").textContent=activeRoom;
+  document.getElementById("room-theme-swatch").style.background=theme.gradient;
+  document.getElementById("room-theme-label").textContent=theme.label;
   document.getElementById("room-meta").textContent=`${items.length} items · ${bought.length} bought · ${priced.length} priced · ${linked.length} linked`;
-  document.getElementById("room-total").textContent=`$${roomTotal(activeRoom).toFixed(2)}`;
+  document.getElementById("room-total").textContent=actual>0?`$${actual.toFixed(2)}`:"$0";
+  document.getElementById("room-est").textContent=est.lo>0?`$${est.lo.toLocaleString()}–$${est.hi.toLocaleString()}`:"—";
   document.getElementById("prog-fill").style.width=prog+"%";
+  document.getElementById("prog-fill").style.background=theme.a;
   document.getElementById("prog-label").textContent=`${prog}% tracked`;
 }
 
@@ -621,10 +745,40 @@ function renderHeroStats(){
 
 function renderTotals(){
   const gt=grandTotal();
+  const ge=grandEstRange();
   document.getElementById("grand-total").textContent=`$${gt.toFixed(2)}`;
+  document.getElementById("nav-est").textContent=ge.lo>0?`$${ge.lo.toLocaleString()}–$${ge.hi.toLocaleString()}`:"—";
   renderRoomHeader();
   renderRoomNav();
   renderSummary();
+}
+
+function addOption(r,id){
+  const item=data[r].find(i=>i.id===id);
+  if(!item) return;
+  item.options.push({label:"New option",url:"",price:"",note:""});
+  renderItems();
+}
+function removeOption(r,id,oi){
+  const item=data[r].find(i=>i.id===id);
+  if(!item) return;
+  item.options.splice(oi,1);
+  renderItems(); renderTotals(); renderHeroStats();
+}
+function updateOption(r,id,oi,field,val){
+  const item=data[r].find(i=>i.id===id);
+  if(!item) return;
+  item.options[oi][field]=val;
+  renderTotals(); renderHeroStats();
+}
+
+function itemDisplayPrice(item){
+  if(item.price) return pp(item.price);
+  if(item.options&&item.options.length){
+    const prices=item.options.filter(o=>o.price).map(o=>pp(o.price));
+    if(prices.length) return Math.min(...prices);
+  }
+  return 0;
 }
 
 function renderItems(){
@@ -632,23 +786,60 @@ function renderItems(){
   const items=data[activeRoom].filter(i=>filterMode==="all"||!i.bought);
   document.getElementById("items-count").textContent=`${items.length} item${items.length!==1?"s":""}`;
   if(!items.length){list.innerHTML=`<div class="empty-state">All done in here! 🎉</div>`; return;}
+  const theme=ROOM_THEMES[activeRoom];
   list.innerHTML=items.map(item=>{
     const key=`${activeRoom}-${item.id}`;
     const isExp=expandedKey===key;
     const safeUrl=item.url.replace(/"/g,'&quot;');
     const safeNote=item.note.replace(/"/g,'&quot;');
     const safePrice=item.price.replace(/"/g,'&quot;');
+    const opts=item.options||[];
+    const optPrices=opts.filter(o=>o.price).map(o=>pp(o.price));
+    const priceRange=optPrices.length>1?`$${Math.min(...optPrices).toFixed(0)}–$${Math.max(...optPrices).toFixed(0)}`:
+                     optPrices.length===1?`$${optPrices[0].toFixed(2)}`:"";
+    const optionsHtml=opts.map((o,oi)=>{
+      const safeOUrl=(o.url||"").replace(/"/g,'&quot;');
+      const safeONote=(o.note||"").replace(/"/g,'&quot;');
+      const safeOLabel=(o.label||"").replace(/"/g,'&quot;');
+      return `<div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:${theme.a};flex-shrink:0;"></div>
+          <input class="detail-input" type="text" placeholder="Option name..." value="${safeOLabel}" oninput="updateOption('${activeRoom}',${item.id},${oi},'label',this.value)" style="flex:1;font-weight:500;" />
+          <button class="btn-remove" onclick="removeOption('${activeRoom}',${item.id},${oi})" style="font-size:16px;">×</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div class="detail-field" style="flex:2;min-width:160px;">
+            <label class="detail-label">URL</label>
+            <input class="detail-input" type="url" placeholder="https://..." value="${safeOUrl}" oninput="updateOption('${activeRoom}',${item.id},${oi},'url',this.value)" />
+          </div>
+          <div class="detail-field narrow">
+            <label class="detail-label">Price</label>
+            <input class="detail-input" type="text" placeholder="$0.00" value="${o.price||""}" oninput="updateOption('${activeRoom}',${item.id},${oi},'price',this.value)" />
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <label class="detail-label">Note</label>
+          <input class="detail-input" type="text" placeholder="e.g. on sale, check reviews..." value="${safeONote}" oninput="updateOption('${activeRoom}',${item.id},${oi},'note',this.value)" />
+        </div>
+      </div>`;
+    }).join("");
+
     return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}">
       <div class="item-main">
         <input type="checkbox" class="item-check" ${item.bought?"checked":""} onchange="toggleBought('${activeRoom}',${item.id})" title="Mark as bought" />
         <span class="item-name" style="${item.bought?"text-decoration:line-through;color:var(--muted)":""}">${item.name}</span>
+        ${item.est&&!item.price&&!priceRange?`<span class="badge badge-est">est. ${item.est}</span>`:""}
+        ${opts.length>0&&!item.price?`<span class="badge" style="background:${theme.aLight};color:${theme.a};">${opts.length} option${opts.length>1?"s":""}</span>`:""}
+        ${priceRange&&!item.price?`<span class="badge badge-price">${priceRange}</span>`:""}
         ${item.url?`<a href="${safeUrl}" target="_blank" class="badge badge-link">↗ link</a>`:""}
         ${item.price?`<span class="badge badge-price">$${pp(item.price).toFixed(2)}</span>`:""}
         <button class="btn-details${isExp?" open":""}" onclick="toggleExpand('${key}')">${isExp?"✓ done":"+ details"}</button>
         <button class="btn-remove" onclick="removeItem('${activeRoom}',${item.id})">×</button>
       </div>
       ${!isExp&&item.note?`<div class="item-note-preview">${item.note}</div>`:""}
+      ${!isExp&&opts.length>0?`<div style="padding:0 18px 10px 50px;display:flex;flex-wrap:wrap;gap:6px;">${opts.map(o=>`<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${theme.aLight};color:${theme.a};">${o.label||"Option"}${o.price?` · $${pp(o.price).toFixed(0)}`:""}</span>`).join("")}</div>`:""}
       <div class="item-detail${isExp?" open":""}">
+        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Single item details</div>
         <div class="detail-row">
           <div class="detail-field">
             <label class="detail-label">Link / URL</label>
@@ -662,8 +853,15 @@ function renderItems(){
         <div class="detail-row">
           <div class="detail-field">
             <label class="detail-label">Note</label>
-            <input class="detail-input" type="text" placeholder="e.g. check FB Marketplace first, needs to be queen" value="${safeNote}" oninput="updateField('${activeRoom}',${item.id},'note',this.value)" />
+            <input class="detail-input" type="text" placeholder="e.g. check FB Marketplace first" value="${safeNote}" oninput="updateField('${activeRoom}',${item.id},'note',this.value)" />
           </div>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);">Compare options ${opts.length>0?`(${opts.length})`:""}</div>
+            <button onclick="addOption('${activeRoom}',${item.id})" style="font-size:12px;padding:3px 10px;border-radius:6px;border:1px dashed ${theme.a};background:${theme.aLight};color:${theme.a};cursor:pointer;">+ add option</button>
+          </div>
+          ${optionsHtml}
         </div>
       </div>
     </div>`;
@@ -672,13 +870,19 @@ function renderItems(){
 
 function renderSummary(){
   document.getElementById("summary-grid").innerHTML=ROOMS.map(r=>{
-    const t=roomTotal(r);
+    const actual=roomTotal(r);
+    const est=roomEstRange(r);
     const total=data[r].length;
     const bought=data[r].filter(i=>i.bought).length;
-    return `<div class="summary-card">
-      <div class="summary-room">${r}</div>
-      <div class="summary-amount">${t>0?`$${t.toFixed(2)}`:"—"}</div>
-      <div class="summary-sub">${bought}/${total} bought</div>
+    const theme=ROOM_THEMES[r];
+    return `<div class="summary-card" style="border-top:3px solid ${theme.a};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${theme.gradient};flex-shrink:0;"></div>
+        <div class="summary-room">${r}</div>
+      </div>
+      <div class="summary-amount">${actual>0?`$${actual.toFixed(2)}`:"—"}</div>
+      ${est.lo>0?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">est. $${est.lo.toLocaleString()}–$${est.hi.toLocaleString()}</div>`:""}
+      <div class="summary-sub" style="margin-top:4px;">${bought}/${total} bought</div>
     </div>`;
   }).join("");
 }
