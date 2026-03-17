@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apartment Tracker — Gabby's Move 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream: #F7F4EF;
+    --ink: #1C1917;
+    --muted: #78716C;
+    --border: #E5E0D8;
+    --white: #FFFFFF;
+    --accent: #C26B3F;
+    --accent-light: #F5E6DC;
+    --green: #3A7D5B;
+    --green-light: #DFF0E8;
+    --blue: #2E6B9E;
+    --blue-light: #DDEDF8;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+  .nav-brand {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .nav-brand span { color: var(--accent); font-style: italic; }
+  .nav-total {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .nav-total-label { font-size: 12px; color: var(--muted); }
+  .nav-total-num {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--accent);
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--ink);
+    color: var(--white);
+    padding: 56px 40px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: -60px;
+    top: -60px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.08;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 10px;
+  }
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .hero-title em { color: var(--accent); font-style: italic; }
+  .hero-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 36px; font-weight: 300; }
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .hero-stat-num {
+    font-family: var(--serif);
+    font-size: 32px;
+    color: var(--white);
+    display: block;
+  }
+  .hero-stat-label { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+  /* ROOM TABS */
+  .room-nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .room-tab {
+    padding: 16px 24px;
+    border: none;
+    background: none;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .room-tab:hover { color: var(--ink); }
+  .room-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+  .room-tab .tab-amount {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ROOM HEADER */
+  .room-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .room-title {
+    font-family: var(--serif);
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .room-meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .room-total-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 22px;
+    text-align: right;
+    min-width: 140px;
+  }
+  .room-total-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .room-total-num {
+    font-family: var(--serif);
+    font-size: 28px;
+    color: var(--accent);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* PROGRESS */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* FILTER */
+  .filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .filter-btns { display: flex; gap: 4px; }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .filter-btn.active {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
+  .items-count { font-size: 13px; color: var(--muted); }
+
+  /* ITEMS */
+  .items-list { display: flex; flex-direction: column; gap: 8px; }
+  .item-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .item-card:hover { border-color: #C8BFB5; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .item-card.expanded { border-color: var(--accent); }
+  .item-card.skipped { opacity: 0.38; }
+  .item-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+  .item-check {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .item-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-price {
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .badge-link {
+    background: var(--blue-light);
+    color: var(--blue);
+    text-decoration: none;
+  }
+  .btn-details {
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.12s;
+  }
+  .btn-details:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-details.open { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+  .btn-remove {
+    background: none;
+    border: none;
+    color: #C8BFB5;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .btn-remove:hover { color: #E06B6B; }
+
+  /* EXPANDED DETAIL */
+  .item-detail {
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeIn 0.15s ease;
+  }
+  .item-detail.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .detail-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .detail-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .detail-field.narrow { flex: 0 0 110px; min-width: 110px; }
+  .detail-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .detail-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--cream);
+    transition: border-color 0.12s;
+    width: 100%;
+  }
+  .detail-input:focus { outline: none; border-color: var(--accent); background: var(--white); }
+  .item-note-preview {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    padding: 0 18px 10px 50px;
+  }
+
+  /* ADD ITEM */
+  .add-section {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+  }
+  .add-input {
+    flex: 1;
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    transition: border-color 0.12s;
+  }
+  .add-input:focus { outline: none; border-color: var(--accent); }
+  .add-btn {
+    padding: 11px 22px;
+    background: var(--accent);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  .add-btn:hover { opacity: 0.88; }
+
+  /* FOOTER SUMMARY */
+  .summary-grid {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .summary-room { font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .summary-amount {
+    font-family: var(--serif);
+    font-size: 26px;
+    color: var(--ink);
+  }
+  .summary-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">nest<span>list</span></div>
+  <div class="nav-total">
+    <span class="nav-total-label">total budgeted</span>
+    <span class="nav-total-num" id="grand-total">$0</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Move-in tracker · Denver, CO</div>
+  <h1 class="hero-title">Your <em>new place,</em><br>all in one list.</h1>
+  <p class="hero-sub">June 2026 · Add items, drop links, track prices.</p>
+  <div class="hero-stats">
+    <div>
+      <span class="hero-stat-num" id="h-needed">0</span>
+      <span class="hero-stat-label">still to buy</span>
+    </div>
+    <div>
+      <span class="hero-stat-num" id="h-priced">0</span>
+      <span class="hero-stat-label">priced so far</span>
+    </div>
+    <div>
+      <span class="hero-stat-num" id="h-linked">0</span>
+      <span class="hero-stat-label">links saved</span>
+    </div>
+  </div>
+</div>
+
+<div class="room-nav" id="room-nav"></div>
+
+<main class="main">
+  <div class="room-header">
+    <div>
+      <h2 class="room-title" id="room-title">Kitchen</h2>
+      <div class="room-meta" id="room-meta"></div>
+    </div>
+    <div class="room-total-card">
+      <div class="room-total-label">room total</div>
+      <span class="room-total-num" id="room-total">$0</span>
+    </div>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="progress-label" id="prog-label">0% tracked</span>
+  </div>
+
+  <div class="filter-row">
+    <div class="filter-btns">
+      <button class="filter-btn active" id="f-needed" onclick="setFilter('needed')">Still needed</button>
+      <button class="filter-btn" id="f-all" onclick="setFilter('all')">All items</button>
+    </div>
+    <span class="items-count" id="items-count"></span>
+  </div>
+
+  <div class="items-list" id="items-list"></div>
+
+  <div class="add-section">
+    <input class="add-input" id="new-item" placeholder="Add an item to this room..." onkeydown="if(event.key==='Enter')addItem()" />
+    <button class="add-btn" onclick="addItem()">+ Add</button>
+  </div>
+
+  <div class="summary-grid" id="summary-grid"></div>
+</main>
+
+<script>
+const ROOMS = ["Kitchen","Bathroom","Bedroom","Living Room"];
+let data = {
+  Kitchen: [
+    {id:1,name:"Dish set (4-place setting)",bought:false,url:"",price:"",note:""},
+    {id:2,name:"Pots & pans set",bought:false,url:"",price:"",note:""},
+    {id:3,name:"Chef's knife",bought:false,url:"",price:"",note:""},
+    {id:4,name:"Cutting board",bought:false,url:"",price:"",note:""},
+    {id:5,name:"Utensil set",bought:false,url:"",price:"",note:""},
+    {id:6,name:"Mixing bowls",bought:false,url:"",price:"",note:""},
+    {id:7,name:"Colander",bought:false,url:"",price:"",note:""},
+    {id:8,name:"Can opener",bought:false,url:"",price:"",note:""},
+    {id:9,name:"Measuring cups & spoons",bought:false,url:"",price:"",note:""},
+    {id:10,name:"Dish drying rack",bought:false,url:"",price:"",note:""},
+    {id:11,name:"Kitchen trash can",bought:false,url:"",price:"",note:""},
+    {id:12,name:"Coffee maker",bought:false,url:"",price:"",note:""},
+    {id:13,name:"Toaster",bought:false,url:"",price:"",note:""},
+    {id:14,name:"Food storage containers",bought:false,url:"",price:"",note:""},
+    {id:15,name:"Paper towel holder",bought:false,url:"",price:"",note:""},
+  ],
+  Bathroom: [
+    {id:1,name:"Bath towels (x4)",bought:false,url:"",price:"",note:""},
+    {id:2,name:"Hand towels (x2)",bought:false,url:"",price:"",note:""},
+    {id:3,name:"Bath mat",bought:false,url:"",price:"",note:""},
+    {id:4,name:"Shower curtain + liner",bought:false,url:"",price:"",note:""},
+    {id:5,name:"Shower curtain rings",bought:false,url:"",price:"",note:""},
+    {id:6,name:"Toilet brush & holder",bought:false,url:"",price:"",note:""},
+    {id:7,name:"Bathroom trash can",bought:false,url:"",price:"",note:""},
+    {id:8,name:"Soap dispenser",bought:false,url:"",price:"",note:""},
+    {id:9,name:"Mirror",bought:false,url:"",price:"",note:""},
+    {id:10,name:"Storage / shelving",bought:false,url:"",price:"",note:""},
+  ],
+  Bedroom: [
+    {id:1,name:"Bed frame",bought:false,url:"",price:"",note:""},
+    {id:2,name:"Mattress",bought:false,url:"",price:"",note:""},
+    {id:3,name:"Mattress protector",bought:false,url:"",price:"",note:""},
+    {id:4,name:"Pillows",bought:false,url:"",price:"",note:""},
+    {id:5,name:"Sheet set",bought:false,url:"",price:"",note:""},
+    {id:6,name:"Duvet / comforter",bought:false,url:"",price:"",note:""},
+    {id:7,name:"Duvet cover",bought:false,url:"",price:"",note:""},
+    {id:8,name:"Dresser",bought:false,url:"",price:"",note:""},
+    {id:9,name:"Nightstand(s)",bought:false,url:"",price:"",note:""},
+    {id:10,name:"Lamp(s)",bought:false,url:"",price:"",note:""},
+    {id:11,name:"Closet organizer",bought:false,url:"",price:"",note:""},
+    {id:12,name:"Hangers (set)",bought:false,url:"",price:"",note:""},
+    {id:13,name:"Blackout curtains",bought:false,url:"",price:"",note:""},
+    {id:14,name:"Full-length mirror",bought:false,url:"",price:"",note:""},
+  ],
+  "Living Room": [
+    {id:1,name:"Sofa / couch",bought:false,url:"",price:"",note:""},
+    {id:2,name:"Coffee table",bought:false,url:"",price:"",note:""},
+    {id:3,name:"TV stand / media console",bought:false,url:"",price:"",note:""},
+    {id:4,name:"TV",bought:false,url:"",price:"",note:""},
+    {id:5,name:"Area rug",bought:false,url:"",price:"",note:""},
+    {id:6,name:"Floor lamp",bought:false,url:"",price:"",note:""},
+    {id:7,name:"Throw blanket",bought:false,url:"",price:"",note:""},
+    {id:8,name:"Decorative pillows",bought:false,url:"",price:"",note:""},
+    {id:9,name:"Bookshelf",bought:false,url:"",price:"",note:""},
+    {id:10,name:"Side table",bought:false,url:"",price:"",note:""},
+    {id:11,name:"Wall art / decor",bought:false,url:"",price:"",note:""},
+  ]
+};
+
+let activeRoom = "Kitchen", filterMode = "needed", expandedKey = null, nextId = 400;
+
+function pp(p){ const n=parseFloat(String(p).replace(/[^0-9.]/g,"")); return isNaN(n)?0:n; }
+function roomTotal(r){ return data[r].filter(i=>i.price).reduce((s,i)=>s+pp(i.price),0); }
+function grandTotal(){ return ROOMS.reduce((s,r)=>s+roomTotal(r),0); }
+function allItems(){ return ROOMS.flatMap(r=>data[r]); }
+
+function setFilter(f){
+  filterMode=f;
+  document.getElementById("f-needed").className="filter-btn"+(f==="needed"?" active":"");
+  document.getElementById("f-all").className="filter-btn"+(f==="all"?" active":"");
+  renderItems();
+}
+
+function setRoom(r){ activeRoom=r; expandedKey=null; renderAll(); }
+
+function toggleExpand(key){
+  expandedKey=expandedKey===key?null:key;
+  renderItems();
+}
+
+function toggleBought(r,id){
+  const item=data[r].find(i=>i.id===id);
+  if(item){item.bought=!item.bought; renderAll();}
+}
+
+function updateField(r,id,field,val){
+  const item=data[r].find(i=>i.id===id);
+  if(item){item[field]=val; renderTotals(); renderHeroStats();}
+}
+
+function removeItem(r,id){
+  data[r]=data[r].filter(i=>i.id!==id);
+  if(expandedKey===`${r}-${id}`)expandedKey=null;
+  renderAll();
+}
+
+function addItem(){
+  const inp=document.getElementById("new-item");
+  const name=inp.value.trim(); if(!name)return;
+  data[activeRoom].push({id:nextId++,name,bought:false,url:"",price:"",note:""});
+  inp.value=""; renderAll();
+}
+
+function renderRoomNav(){
+  document.getElementById("room-nav").innerHTML=ROOMS.map(r=>{
+    const t=roomTotal(r);
+    const isA=r===activeRoom;
+    return `<button class="room-tab${isA?" active":""}" onclick="setRoom('${r.replace(/'/g,"\\'")}')">
+      ${r}
+      ${t>0?`<span class="tab-amount">$${Math.round(t)}</span>`:`<span class="tab-amount" style="opacity:0">$0</span>`}
+    </button>`;
+  }).join("");
+}
+
+function renderRoomHeader(){
+  const items=data[activeRoom];
+  const bought=items.filter(i=>i.bought);
+  const priced=items.filter(i=>i.price);
+  const linked=items.filter(i=>i.url);
+  const trackedAll=items.filter(i=>i.url||i.price);
+  const prog=items.length?Math.round(trackedAll.length/items.length*100):0;
+  document.getElementById("room-title").textContent=activeRoom;
+  document.getElementById("room-meta").textContent=`${items.length} items · ${bought.length} bought · ${priced.length} priced · ${linked.length} linked`;
+  document.getElementById("room-total").textContent=`$${roomTotal(activeRoom).toFixed(2)}`;
+  document.getElementById("prog-fill").style.width=prog+"%";
+  document.getElementById("prog-label").textContent=`${prog}% tracked`;
+}
+
+function renderHeroStats(){
+  const all=allItems();
+  document.getElementById("h-needed").textContent=all.filter(i=>!i.bought).length;
+  document.getElementById("h-priced").textContent=all.filter(i=>i.price).length;
+  document.getElementById("h-linked").textContent=all.filter(i=>i.url).length;
+}
+
+function renderTotals(){
+  const gt=grandTotal();
+  document.getElementById("grand-total").textContent=`$${gt.toFixed(2)}`;
+  renderRoomHeader();
+  renderRoomNav();
+  renderSummary();
+}
+
+function renderItems(){
+  const list=document.getElementById("items-list");
+  const items=data[activeRoom].filter(i=>filterMode==="all"||!i.bought);
+  document.getElementById("items-count").textContent=`${items.length} item${items.length!==1?"s":""}`;
+  if(!items.length){list.innerHTML=`<div class="empty-state">All done in here! 🎉</div>`; return;}
+  list.innerHTML=items.map(item=>{
+    const key=`${activeRoom}-${item.id}`;
+    const isExp=expandedKey===key;
+    const safeUrl=item.url.replace(/"/g,'&quot;');
+    const safeNote=item.note.replace(/"/g,'&quot;');
+    const safePrice=item.price.replace(/"/g,'&quot;');
+    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}">
+      <div class="item-main">
+        <input type="checkbox" class="item-check" ${item.bought?"checked":""} onchange="toggleBought('${activeRoom}',${item.id})" title="Mark as bought" />
+        <span class="item-name" style="${item.bought?"text-decoration:line-through;color:var(--muted)":""}">${item.name}</span>
+        ${item.url?`<a href="${safeUrl}" target="_blank" class="badge badge-link">↗ link</a>`:""}
+        ${item.price?`<span class="badge badge-price">$${pp(item.price).toFixed(2)}</span>`:""}
+        <button class="btn-details${isExp?" open":""}" onclick="toggleExpand('${key}')">${isExp?"✓ done":"+ details"}</button>
+        <button class="btn-remove" onclick="removeItem('${activeRoom}',${item.id})">×</button>
+      </div>
+      ${!isExp&&item.note?`<div class="item-note-preview">${item.note}</div>`:""}
+      <div class="item-detail${isExp?" open":""}">
+        <div class="detail-row">
+          <div class="detail-field">
+            <label class="detail-label">Link / URL</label>
+            <input class="detail-input" type="url" placeholder="https://wayfair.com/..." value="${safeUrl}" oninput="updateField('${activeRoom}',${item.id},'url',this.value)" />
+          </div>
+          <div class="detail-field narrow">
+            <label class="detail-label">Price</label>
+            <input class="detail-input" type="text" placeholder="$0.00" value="${safePrice}" oninput="updateField('${activeRoom}',${item.id},'price',this.value)" />
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-field">
+            <label class="detail-label">Note</label>
+            <input class="detail-input" type="text" placeholder="e.g. check FB Marketplace first, needs to be queen" value="${safeNote}" oninput="updateField('${activeRoom}',${item.id},'note',this.value)" />
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderSummary(){
+  document.getElementById("summary-grid").innerHTML=ROOMS.map(r=>{
+    const t=roomTotal(r);
+    const total=data[r].length;
+    const bought=data[r].filter(i=>i.bought).length;
+    return `<div class="summary-card">
+      <div class="summary-room">${r}</div>
+      <div class="summary-amount">${t>0?`$${t.toFixed(2)}`:"—"}</div>
+      <div class="summary-sub">${bought}/${total} bought</div>
+    </div>`;
+  }).join("");
+}
+
+function renderAll(){
+  renderRoomNav();
+  renderRoomHeader();
+  renderItems();
+  renderTotals();
+  renderHeroStats();
+  renderSummary();
+}
+renderAll();
+</script>
+</body>
+</html>
