@@ -930,7 +930,7 @@ function renderItems(){
       </div>`;
     }).join("");
 
-    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}${item.owned?" owned":""}" id="card-${activeRoom}-${item.id}" style="background:${theme.aLight}">
+    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}${item.owned?" owned":""}" id="card-${activeRoom}-${item.id}" style="background:${theme.bLight}">
       <div class="item-main">
         <input type="checkbox" class="item-check" ${item.bought?"checked":""} onchange="toggleBought('${activeRoom}',${item.id})" title="Mark as bought" />
         <span class="item-name" style="${item.bought?"text-decoration:line-through;color:var(--muted)":""}">${item.name}</span>
