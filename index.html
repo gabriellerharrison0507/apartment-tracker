@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>RoomList — Gabby's Move 2026</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -421,6 +422,13 @@
     font-size: 14px;
   }
 
+  /* FADE OUT ANIMATION */
+  @keyframes itemFadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(6px); }
+  }
+  .item-fadeout { animation: itemFadeOut 0.25s ease forwards; pointer-events: none; }
+
   /* OWNED ITEMS */
   .item-card.owned { opacity: 0.45; }
   .badge-owned { background: #E8F5E9; color: #388E3C; }
@@ -733,7 +741,12 @@ function grandEstRange(){
 
 function toggleOwned(r,id){
   const item=data[r].find(i=>i.id===id);
-  if(item){item.owned=!item.owned; if(item.owned)item.bought=false; saveData(); renderAll();}
+  if(!item) return;
+  const el=document.getElementById(`card-${r}-${id}`);
+  if(el && !item.owned){
+    el.classList.add('item-fadeout');
+    setTimeout(()=>{ item.owned=!item.owned; if(item.owned)item.bought=false; saveData(); renderAll(); }, 250);
+  } else { item.owned=!item.owned; if(item.owned)item.bought=false; saveData(); renderAll(); }
 }
 
 function updateItemName(r,id,val){
@@ -764,7 +777,12 @@ function toggleExpand(key){
 
 function toggleBought(r,id){
   const item=data[r].find(i=>i.id===id);
-  if(item){item.bought=!item.bought; saveData(); renderAll();}
+  if(!item) return;
+  const el=document.getElementById(`card-${r}-${id}`);
+  if(el && !item.bought){
+    el.classList.add('item-fadeout');
+    setTimeout(()=>{ item.bought=!item.bought; saveData(); renderAll(); }, 250);
+  } else { item.bought=!item.bought; saveData(); renderAll(); }
 }
 
 function updateField(r,id,field,val){
@@ -912,7 +930,7 @@ function renderItems(){
       </div>`;
     }).join("");
 
-    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}${item.owned?" owned":""}">
+    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}${item.owned?" owned":""}" id="card-${activeRoom}-${item.id}" style="background:${theme.aLight}">
       <div class="item-main">
         <input type="checkbox" class="item-check" ${item.bought?"checked":""} onchange="toggleBought('${activeRoom}',${item.id})" title="Mark as bought" />
         <span class="item-name" style="${item.bought?"text-decoration:line-through;color:var(--muted)":""}">${item.name}</span>
