@@ -420,12 +420,54 @@
     color: var(--muted);
     font-size: 14px;
   }
+
+  /* OWNED ITEMS */
+  .item-card.owned { opacity: 0.45; }
+  .badge-owned { background: #E8F5E9; color: #388E3C; }
+  .btn-own {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 11px; color: var(--muted); cursor: pointer;
+    padding: 3px 8px; white-space: nowrap; font-family: var(--sans);
+    transition: all 0.12s; flex-shrink: 0;
+  }
+  .btn-own:hover { border-color: #76C893; color: #388E3C; }
+  .btn-own.active { background: #E8F5E9; color: #388E3C; border-color: #76C893; }
+
+  /* RESET BUTTON */
+  .btn-reset {
+    font-size: 12px; padding: 5px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; font-family: var(--sans);
+    transition: all 0.12s;
+  }
+  .btn-reset:hover { border-color: #E06B6B; color: #E06B6B; }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    nav { padding: 0 16px; height: auto; min-height: 60px; flex-wrap: wrap; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+    .nav-brand { font-size: 17px; }
+    .hero { padding: 28px 16px 24px; }
+    .hero-title { font-size: 26px; }
+    .hero-stats { gap: 16px; flex-wrap: wrap; }
+    .hero-stat-num { font-size: 24px; }
+    .room-nav { padding: 0 8px; }
+    .room-tab { padding: 10px 12px; font-size: 13px; }
+    .main { padding: 20px 12px 60px; }
+    .room-header { flex-direction: column; }
+    .room-total-card { width: 100%; min-width: unset; text-align: left; }
+    .filter-row { flex-wrap: wrap; gap: 8px; }
+    .item-main { flex-wrap: wrap; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .add-section { flex-direction: column; }
+    .add-btn { width: 100%; }
+  }
 </style>
 </head>
 <body>
 
 <nav>
   <div class="nav-brand">nest<span>list</span></div>
+  <button class="btn-reset" onclick="resetToDefaults()">Reset data</button>
   <div class="nav-total">
     <div style="text-align:right;">
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;">
@@ -458,6 +500,10 @@
     <div>
       <span class="hero-stat-num" id="h-linked">0</span>
       <span class="hero-stat-label">links saved</span>
+    </div>
+    <div>
+      <span class="hero-stat-num" id="h-remaining" style="font-size:20px;">—</span>
+      <span class="hero-stat-label">est. remaining</span>
     </div>
   </div>
 </div>
@@ -564,13 +610,13 @@ let data = {
     {id:18,name:"Pour over coffee maker",est:"$25–$45",bought:false,url:"",price:"",note:"Maybe — check if you still want after getting grinder",options:[]},
     {id:26,name:"Island stools (x2–4)",est:"$80–$200",bought:false,url:"",price:"",note:"No dining table — these are it",options:[]},
     {id:27,name:"Kitchen towels",est:"$10–$25",bought:false,url:"",price:"",note:"",options:[]},
-    {id:19,name:"Mugs",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:20,name:"Tupperware / food storage",est:"$20–$50",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:21,name:"Paper towel holder",est:"$10–$30",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:22,name:"Dish drying rack",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:23,name:"French press",est:"$20–$50",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:24,name:"Food scale",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:25,name:"Air fryer",est:"$50–$120",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:19,name:"Mugs",est:"$15–$40",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:20,name:"Tupperware / food storage",est:"$20–$50",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:21,name:"Paper towel holder",est:"$10–$30",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:22,name:"Dish drying rack",est:"$15–$40",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:23,name:"French press",est:"$20–$50",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:24,name:"Food scale",est:"$15–$40",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:25,name:"Air fryer",est:"$50–$120",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
   ],
   Bathroom: [
     {id:1,name:"Bath towels (x4)",est:"$35–$60",bought:false,url:"https://www.amazon.com/dp/B07Z5X3HMY",price:"35",note:"Chakir Turkish Linens 4-pack — choose white or grey",options:[]},
@@ -579,9 +625,9 @@ let data = {
     {id:4,name:"Toilet brush & plunger set",est:"$20–$30",bought:false,url:"https://www.amazon.com/Bath-Bliss-Toilet-Plunger-Stainless/dp/B09SZSBDQS",price:"24.99",note:"Bath Bliss stainless set — brush + plunger combo",options:[]},
     {id:5,name:"Bathroom trash can",est:"$25–$35",bought:false,url:"https://www.amazon.com/TIPGO-Automatic-Bathroom-Touchless-Wastebasket/dp/B0CKY276T3",price:"26.99",note:"TIPGO touchless automatic — normally $29, on sale",options:[]},
     {id:6,name:"Organizer containers",est:"$15–$35",bought:false,url:"",price:"",note:"Hold off for now — figure out layout first",options:[]},
-    {id:7,name:"Bath mat",est:"$15–$40",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:8,name:"Shower curtain rings",est:"$8–$20",bought:true,url:"",price:"",note:"Already have",options:[]},
-    {id:9,name:"Soap dispenser",est:"$8–$25",bought:true,url:"",price:"",note:"Already have",options:[]},
+    {id:7,name:"Bath mat",est:"$15–$40",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:8,name:"Shower curtain rings",est:"$8–$20",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
+    {id:9,name:"Soap dispenser",est:"$8–$25",bought:false,owned:true,url:"",price:"",note:"Already have",options:[]},
   ],
   Bedroom: [
     {id:1,name:"Bed frame",est:"$200–$530",bought:false,url:"",price:"",note:"",options:[
@@ -640,7 +686,16 @@ let data = {
 
 // Load persisted data from localStorage, fall back to defaults
 const SAVED = localStorage.getItem("aptTracker_data");
-if (SAVED) { try { data = JSON.parse(SAVED); } catch(e) {} }
+if (SAVED) { try {
+  data = JSON.parse(SAVED);
+  // Migration: convert old "Already have" bought items to owned
+  ROOMS.forEach(r => { if (!data[r]) return; data[r].forEach(item => {
+    if (item.owned === undefined) {
+      item.owned = !!(item.bought && item.note && item.note.includes("Already have"));
+      if (item.owned) item.bought = false;
+    }
+  }); });
+} catch(e) {} }
 const SAVED_ID = localStorage.getItem("aptTracker_nextId");
 let nextId = SAVED_ID ? parseInt(SAVED_ID) : 400;
 
@@ -663,8 +718,8 @@ function parseEstRange(est){
   return {lo:parseInt(nums[0]),hi:parseInt(nums[1])};
 }
 function roomEstRange(r){
-  const unbought = data[r].filter(i=>!i.bought&&!i.price&&i.est);
-  const priced = data[r].filter(i=>!i.bought&&i.price);
+  const unbought = data[r].filter(i=>!i.bought&&!i.owned&&!i.price&&i.est);
+  const priced = data[r].filter(i=>!i.bought&&!i.owned&&i.price);
   let lo=0,hi=0;
   unbought.forEach(i=>{ const e=parseEstRange(i.est); lo+=e.lo; hi+=e.hi; });
   priced.forEach(i=>{ lo+=pp(i.price); hi+=pp(i.price); });
@@ -674,6 +729,23 @@ function grandEstRange(){
   let lo=0,hi=0;
   ROOMS.forEach(r=>{ const e=roomEstRange(r); lo+=e.lo; hi+=e.hi; });
   return {lo,hi};
+}
+
+function toggleOwned(r,id){
+  const item=data[r].find(i=>i.id===id);
+  if(item){item.owned=!item.owned; if(item.owned)item.bought=false; saveData(); renderAll();}
+}
+
+function updateItemName(r,id,val){
+  const item=data[r].find(i=>i.id===id);
+  if(item){item.name=val; saveData();}
+}
+
+function resetToDefaults(){
+  if(!confirm("Reset all data back to defaults? This will erase all your changes."))return;
+  localStorage.removeItem("aptTracker_data");
+  localStorage.removeItem("aptTracker_nextId");
+  location.reload();
 }
 
 function setFilter(f){
@@ -729,6 +801,7 @@ function renderRoomNav(){
 function renderRoomHeader(){
   const items=data[activeRoom];
   const bought=items.filter(i=>i.bought);
+  const owned=items.filter(i=>i.owned);
   const priced=items.filter(i=>i.price);
   const linked=items.filter(i=>i.url);
   const trackedAll=items.filter(i=>i.url||i.price);
@@ -739,7 +812,7 @@ function renderRoomHeader(){
   document.getElementById("room-title").textContent=activeRoom;
   document.getElementById("room-theme-swatch").style.background=theme.gradient;
   document.getElementById("room-theme-label").textContent=theme.label;
-  document.getElementById("room-meta").textContent=`${items.length} items · ${bought.length} bought · ${priced.length} priced · ${linked.length} linked`;
+  document.getElementById("room-meta").textContent=`${items.length} items · ${bought.length} purchased · ${owned.length} already own · ${priced.length} priced · ${linked.length} linked`;
   document.getElementById("room-total").textContent=actual>0?`$${actual.toFixed(2)}`:"$0";
   document.getElementById("room-est").textContent=est.lo>0?`$${est.lo.toLocaleString()}–$${est.hi.toLocaleString()}`:"—";
   document.getElementById("prog-fill").style.width=prog+"%";
@@ -749,9 +822,11 @@ function renderRoomHeader(){
 
 function renderHeroStats(){
   const all=allItems();
-  document.getElementById("h-needed").textContent=all.filter(i=>!i.bought).length;
+  document.getElementById("h-needed").textContent=all.filter(i=>!i.bought&&!i.owned).length;
   document.getElementById("h-priced").textContent=all.filter(i=>i.price).length;
   document.getElementById("h-linked").textContent=all.filter(i=>i.url).length;
+  const ge=grandEstRange();
+  document.getElementById("h-remaining").textContent=ge.lo>0?`$${ge.lo.toLocaleString()}–$${ge.hi.toLocaleString()}`:"—";
 }
 
 function renderTotals(){
@@ -794,7 +869,9 @@ function itemDisplayPrice(item){
 
 function renderItems(){
   const list=document.getElementById("items-list");
-  const items=data[activeRoom].filter(i=>filterMode==="all"||!i.bought);
+  const items=data[activeRoom]
+    .filter(i=>filterMode==="all"||(!i.bought&&!i.owned))
+    .sort((a,b)=>{ const rank=i=>i.owned?2:i.bought?1:0; return rank(a)-rank(b); });
   document.getElementById("items-count").textContent=`${items.length} item${items.length!==1?"s":""}`;
   if(!items.length){list.innerHTML=`<div class="empty-state">All done in here! 🎉</div>`; return;}
   const theme=ROOM_THEMES[activeRoom];
@@ -835,7 +912,7 @@ function renderItems(){
       </div>`;
     }).join("");
 
-    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}">
+    return `<div class="item-card${isExp?" expanded":""}${item.bought?" skipped":""}${item.owned?" owned":""}">
       <div class="item-main">
         <input type="checkbox" class="item-check" ${item.bought?"checked":""} onchange="toggleBought('${activeRoom}',${item.id})" title="Mark as bought" />
         <span class="item-name" style="${item.bought?"text-decoration:line-through;color:var(--muted)":""}">${item.name}</span>
@@ -844,13 +921,21 @@ function renderItems(){
         ${priceRange&&!item.price?`<span class="badge badge-price">${priceRange}</span>`:""}
         ${item.url?`<a href="${safeUrl}" target="_blank" class="badge badge-link">↗ link</a>`:""}
         ${item.price?`<span class="badge badge-price">$${pp(item.price).toFixed(2)}</span>`:""}
+        ${item.owned?`<span class="badge badge-owned">already own</span>`:""}
         <button class="btn-details${isExp?" open":""}" onclick="toggleExpand('${key}')">${isExp?"✓ done":"+ details"}</button>
+        <button class="btn-own${item.owned?" active":""}" onclick="toggleOwned('${activeRoom}',${item.id})" title="${item.owned?"Unmark as owned":"Mark as already owned"}">${item.owned?"✓ own":"own"}</button>
         <button class="btn-remove" onclick="removeItem('${activeRoom}',${item.id})">×</button>
       </div>
       ${!isExp&&item.note?`<div class="item-note-preview">${item.note}</div>`:""}
       ${!isExp&&opts.length>0?`<div style="padding:0 18px 10px 50px;display:flex;flex-wrap:wrap;gap:6px;">${opts.map(o=>`<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${theme.aLight};color:${theme.a};">${o.label||"Option"}${o.price?` · $${pp(o.price).toFixed(0)}`:""}</span>`).join("")}</div>`:""}
       <div class="item-detail${isExp?" open":""}">
         <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Single item details</div>
+        <div class="detail-row">
+          <div class="detail-field">
+            <label class="detail-label">Item name</label>
+            <input class="detail-input" type="text" value="${item.name.replace(/"/g,'&quot;')}" oninput="updateItemName('${activeRoom}',${item.id},this.value)" />
+          </div>
+        </div>
         <div class="detail-row">
           <div class="detail-field">
             <label class="detail-label">Link / URL</label>
