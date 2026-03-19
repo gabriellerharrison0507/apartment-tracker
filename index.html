@@ -644,13 +644,9 @@
       <input id="filter-date" type="date" oninput="applyUnitFilters()" />
     </div>
     <div>
-      <div class="detail-label" style="margin-bottom:4px;">Sort By</div>
-      <select id="filter-sort" onchange="applyUnitFilters()">
-        <option value="plan">Plan (A1, A2...)</option>
-        <option value="price">Price (low → high)</option>
-        <option value="price-desc">Price (high → low)</option>
-        <option value="avail">Available Date</option>
-        <option value="sqft">Sq Ft</option>
+      <div class="detail-label" style="margin-bottom:4px;">Floor</div>
+      <select id="filter-floor" onchange="applyUnitFilters()">
+        <option value="all">All Floors</option>
       </select>
     </div>
     <button onclick="clearUnitFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
@@ -1233,21 +1229,32 @@ function addUnitSnapshot() {
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
 
-let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterSort = "plan";
+let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all";
+let unitSortCol = "plan", unitSortDir = "asc";
 
+function setSortCol(col) {
+  if (unitSortCol === col) unitSortDir = unitSortDir === "asc" ? "desc" : "asc";
+  else { unitSortCol = col; unitSortDir = "asc"; }
+  renderUnitTable();
+}
+function sortArrow(col) {
+  if (unitSortCol !== col) return ' <span style="color:#ccc;font-size:10px;">↕</span>';
+  return unitSortDir === "asc" ? ' <span style="color:var(--accent);font-size:11px;">↑</span>' : ' <span style="color:var(--accent);font-size:11px;">↓</span>';
+}
 function applyUnitFilters() {
   unitFilterPlan = document.getElementById("filter-plan").value;
   unitFilterMaxPrice = document.getElementById("filter-price").value;
   unitFilterDate = document.getElementById("filter-date").value;
-  unitFilterSort = document.getElementById("filter-sort").value;
+  unitFilterFloor = document.getElementById("filter-floor").value;
   renderUnitTable();
 }
 function clearUnitFilters() {
   document.getElementById("filter-plan").value = "all";
   document.getElementById("filter-price").value = "";
   document.getElementById("filter-date").value = "";
-  document.getElementById("filter-sort").value = "plan";
-  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = ""; unitFilterSort = "plan";
+  document.getElementById("filter-floor").value = "all";
+  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = ""; unitFilterFloor = "all";
+  unitSortCol = "plan"; unitSortDir = "asc";
   renderUnitTable();
 }
 
@@ -1274,24 +1281,34 @@ function renderUnitTable() {
   // Build rows from latest snapshot only
   let rows = Object.entries(latest.units).map(([code, u]) => ({
     code, plan: u.plan, sqft: u.sqft,
+    floor: parseInt(String(code)[0]) || 0,
     availDateRaw: u.availDate,
     availDateFmt: u.availDate ? new Date(u.availDate + "T12:00:00").toLocaleDateString("en-US", {month:"short", day:"numeric"}) : "—",
     minRent: u.minRent,
     prevRent: prev?.units[code]?.minRent ?? null
   }));
 
+  // Populate floor dropdown
+  const allFloors = [...new Set(rows.map(r => r.floor))].sort((a,b) => a - b);
+  const floorSelect = document.getElementById("filter-floor");
+  const currentFloor = floorSelect.value;
+  floorSelect.innerHTML = '<option value="all">All Floors</option>' + allFloors.map(f => `<option value="${f}"${String(f)===currentFloor?" selected":""}>${f}</option>`).join("");
+
   // Apply filters
   if (unitFilterPlan !== "all") rows = rows.filter(r => r.plan === unitFilterPlan);
   if (unitFilterMaxPrice) rows = rows.filter(r => r.minRent <= parseFloat(unitFilterMaxPrice));
   if (unitFilterDate) rows = rows.filter(r => !r.availDateRaw || r.availDateRaw <= unitFilterDate);
+  if (unitFilterFloor !== "all") rows = rows.filter(r => r.floor === parseInt(unitFilterFloor));
 
   // Sort
   rows.sort((a, b) => {
-    if (unitFilterSort === "price") return a.minRent - b.minRent;
-    if (unitFilterSort === "price-desc") return b.minRent - a.minRent;
-    if (unitFilterSort === "avail") return (a.availDateRaw || "9999") > (b.availDateRaw || "9999") ? 1 : -1;
-    if (unitFilterSort === "sqft") return a.sqft - b.sqft;
-    return a.plan !== b.plan ? a.plan.localeCompare(b.plan, undefined, {numeric:true}) : a.code.localeCompare(b.code, undefined, {numeric:true}); // default: plan
+    let cmp = 0;
+    if (unitSortCol === "price") cmp = a.minRent - b.minRent;
+    else if (unitSortCol === "avail") cmp = (a.availDateRaw || "9999") > (b.availDateRaw || "9999") ? 1 : -1;
+    else if (unitSortCol === "sqft") cmp = a.sqft - b.sqft;
+    else if (unitSortCol === "floor") cmp = a.floor - b.floor;
+    else cmp = a.plan !== b.plan ? a.plan.localeCompare(b.plan, undefined, {numeric:true}) : a.code.localeCompare(b.code, undefined, {numeric:true});
+    return unitSortDir === "asc" ? cmp : -cmp;
   });
 
   if (!rows.length) {
@@ -1299,9 +1316,13 @@ function renderUnitTable() {
     renderUnitChart(); return;
   }
 
+  const thStyle = "cursor:pointer;user-select:none;";
   let html = `<table class="unit-table"><thead><tr>
-    <th>Plan</th><th>Sq Ft</th><th>Unit</th><th>Avail Date</th>
-    <th class="date-col">Today's Price<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
+    <th style="${thStyle}" onclick="setSortCol('plan')">Plan${sortArrow('plan')}</th>
+    <th style="${thStyle}" onclick="setSortCol('sqft')">Sq Ft${sortArrow('sqft')}</th>
+    <th style="${thStyle}" onclick="setSortCol('floor')">Unit${sortArrow('floor')}</th>
+    <th style="${thStyle}" onclick="setSortCol('avail')">Avail Date${sortArrow('avail')}</th>
+    <th class="date-col" style="${thStyle}" onclick="setSortCol('price')">Today's Price${sortArrow('price')}<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
   </tr></thead><tbody>`;
 
   rows.forEach(r => {
