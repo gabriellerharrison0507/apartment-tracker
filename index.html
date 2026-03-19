@@ -424,7 +424,7 @@
   /* DASHBOARD CARDS */
   .dash-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 32px;
   }
@@ -682,13 +682,6 @@
     <div class="empty-state">Loading...</div>
   </div>
 
-  <div id="unit-inventory-section" style="display:none;margin-top:48px;">
-    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-inventory-chart"></canvas>
-    </div>
-  </div>
-
   <div id="unit-chart-section" style="display:none;margin-top:48px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <h3 style="font-family:var(--serif);font-size:24px;">Price Trends</h3>
@@ -701,6 +694,14 @@
       <canvas id="unit-chart"></canvas>
     </div>
   </div>
+
+  <div id="unit-inventory-section" style="display:none;margin-top:48px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <canvas id="unit-inventory-chart"></canvas>
+    </div>
+  </div>
+
   <div class="unit-import" style="margin-top:32px;">
     <div class="detail-label" style="margin-bottom:6px;">How to update daily</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Drag this button to your bookmarks bar. Then whenever you visit the Lyra floor plans page, click it — it'll extract the data and bring you right back here.</div>
