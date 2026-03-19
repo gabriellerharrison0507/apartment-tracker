@@ -560,11 +560,16 @@
     .dash-card { padding: 14px 16px; }
     .dash-card-value { font-size: 22px; }
 
-    /* Unit filter bar — stack all inputs */
-    .unit-filter-bar { flex-direction: column; gap: 10px; padding: 14px 16px; }
+    /* Unit filter bar — 2-column grid on mobile */
+    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
     .unit-filter-bar input[type="date"] { width: 100%; }
+    .unit-filter-bar button { grid-column: 1 / -1; width: 100%; }
+
+    /* Charts — taller on mobile */
+    #unit-chart { min-height: 260px; }
+    #unit-inventory-chart { min-height: 220px; }
 
     /* Unit table — compact on mobile */
     .unit-table th, .unit-table td { padding: 8px 10px; font-size: 12px; }
@@ -717,14 +722,14 @@
       </div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-chart"></canvas>
+      <canvas id="unit-chart" style="min-height:300px;"></canvas>
     </div>
   </div>
 
   <div id="unit-inventory-section" style="display:none;margin-top:48px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-inventory-chart"></canvas>
+      <canvas id="unit-inventory-chart" style="min-height:260px;"></canvas>
     </div>
   </div>
 
