@@ -421,6 +421,30 @@
     font-size: 14px;
   }
 
+  /* DASHBOARD CARDS */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .dash-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .dash-card-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .dash-card-value {
+    font-family: var(--serif); font-size: 28px; color: var(--ink); line-height: 1;
+  }
+  .dash-card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .dash-up { color: #E06B6B; }
+  .dash-down { color: #388E3C; }
+
   /* UNIT FILTERS */
   .unit-filter-bar {
     background: var(--white); border: 1px solid var(--border); border-radius: 12px;
@@ -628,6 +652,8 @@
     </div>
     <div id="unit-last-updated" style="font-size:12px;color:var(--muted);text-align:right;"></div>
   </div>
+  <div class="dash-grid" id="dash-grid" style="display:none;"></div>
+
   <div class="unit-filter-bar" id="unit-filters" style="display:none;">
     <div>
       <div class="detail-label" style="margin-bottom:4px;">Plan Type</div>
@@ -1229,6 +1255,98 @@ function addUnitSnapshot() {
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
 
+function renderDashboard() {
+  const grid = document.getElementById("dash-grid");
+  if (!unitSnapshots.length) { grid.style.display = "none"; return; }
+  grid.style.display = "";
+
+  const latest = unitSnapshots[unitSnapshots.length - 1];
+  const prev = unitSnapshots.length > 1 ? unitSnapshots[unitSnapshots.length - 2] : null;
+
+  const latestUnits = Object.entries(latest.units);
+  const prevUnits = prev ? Object.entries(prev.units) : [];
+
+  // Total available
+  const totalNow = latestUnits.length;
+  const totalPrev = prevUnits.length;
+  const totalDiff = totalNow - totalPrev;
+
+  // New listings (in latest but not in prev)
+  const newUnits = prev ? latestUnits.filter(([code]) => !prev.units[code]) : [];
+
+  // Gone units (in prev but not in latest)
+  const goneUnits = prev ? prevUnits.filter(([code]) => !latest.units[code]) : [];
+
+  // Cheapest unit
+  const cheapest = latestUnits.reduce((best, [code, u]) =>
+    !best || u.minRent < best.minRent ? {...u, code} : best, null);
+
+  // Best price per sqft
+  const bestPsf = latestUnits.reduce((best, [code, u]) => {
+    const psf = u.sqft ? u.minRent / u.sqft : Infinity;
+    return !best || psf < best.psf ? {...u, code, psf} : best;
+  }, null);
+
+  // Average price today
+  const avgPrice = latestUnits.length ? Math.round(latestUnits.reduce((s,[,u]) => s + u.minRent, 0) / latestUnits.length) : 0;
+  const avgPricePrev = prev && prevUnits.length ? Math.round(prevUnits.reduce((s,[,u]) => s + u.minRent, 0) / prevUnits.length) : null;
+  const avgDiff = avgPricePrev != null ? avgPrice - avgPricePrev : null;
+
+  function diffBadge(diff, invert = false) {
+    if (diff == null || diff === 0) return "";
+    const up = invert ? diff < 0 : diff > 0;
+    const cls = up ? "dash-up" : "dash-down";
+    const sign = diff > 0 ? "+" : "";
+    return `<span class="${cls}" style="font-size:13px;margin-left:6px;">${sign}${diff}</span>`;
+  }
+
+  const cards = [
+    {
+      label: "Available Today",
+      value: totalNow,
+      sub: prev ? `${totalDiff > 0 ? "+" : ""}${totalDiff} from yesterday` : "No prior data",
+      valueClass: totalDiff < 0 ? "dash-up" : totalDiff > 0 ? "dash-down" : ""
+    },
+    {
+      label: "New Listings",
+      value: newUnits.length,
+      sub: newUnits.length ? newUnits.map(([code, u]) => `#${code} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data",
+      valueClass: newUnits.length ? "dash-down" : ""
+    },
+    {
+      label: "Units Leased",
+      value: goneUnits.length,
+      sub: goneUnits.length ? goneUnits.map(([code, u]) => `#${code} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data",
+      valueClass: goneUnits.length ? "dash-up" : ""
+    },
+    {
+      label: "Avg Price Today",
+      value: avgPrice ? `$${avgPrice.toLocaleString()}` : "—",
+      sub: avgDiff != null ? `${avgDiff > 0 ? "↑" : "↓"} $${Math.abs(avgDiff)} from yesterday` : "No prior data",
+      valueClass: avgDiff > 0 ? "dash-up" : avgDiff < 0 ? "dash-down" : ""
+    },
+    {
+      label: "Cheapest Unit",
+      value: cheapest ? `$${cheapest.minRent.toLocaleString()}` : "—",
+      sub: cheapest ? `#${cheapest.code} · ${cheapest.plan} · ${cheapest.sqft} sqft` : "",
+      valueClass: "dash-down"
+    },
+    {
+      label: "Best $/sqft",
+      value: bestPsf ? `$${bestPsf.psf.toFixed(2)}` : "—",
+      sub: bestPsf ? `#${bestPsf.code} · ${bestPsf.plan} · ${bestPsf.sqft} sqft` : "",
+      valueClass: "dash-down"
+    },
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="dash-card">
+      <div class="dash-card-label">${c.label}</div>
+      <div class="dash-card-value ${c.valueClass || ""}">${c.value}</div>
+      <div class="dash-card-sub">${c.sub}</div>
+    </div>`).join("");
+}
+
 let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all";
 let unitSortCol = "plan", unitSortDir = "asc";
 
@@ -1260,6 +1378,8 @@ function clearUnitFilters() {
 
 function renderUnitTable() {
   const wrap = document.getElementById("unit-table-wrap");
+  renderDashboard();
+
   if (!unitSnapshots.length) {
     wrap.innerHTML = '<div class="empty-state">No snapshots yet — use the bookmarklet on the Lyra floor plans page to import data.</div>';
     document.getElementById("unit-filters").style.display = "none";
