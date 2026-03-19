@@ -1183,8 +1183,6 @@ function renderAll(){
   renderSummary();
 }
 renderAll();
-// Restore last viewed tab
-{ const v = localStorage.getItem("aptTracker_view"); if (v === "units") setView("units"); }
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
@@ -1687,6 +1685,9 @@ function renderUnitChart() {
     }
   });
 }
+
+// Restore last viewed tab — must run after all unit tracker JS is initialized
+{ const v = localStorage.getItem("aptTracker_view"); if (v === "units") setView("units"); }
 </script>
 </body>
 </html>
