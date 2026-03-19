@@ -1509,6 +1509,36 @@ function renderUnitTable() {
   renderUnitChart();
 }
 
+// =============================================================
+// FUTURE ANALYSIS (unlock after ~2-3 weeks of daily data)
+// =============================================================
+//
+// DAY-OF-WEEK PATTERNS
+//   - Avg price by day of week (Mon–Sun) — bar chart or heatmap
+//   - Avg inventory by day of week — do listings spike/drop on certain days?
+//   - Some buildings reprice on a weekly cycle, this would surface it
+//
+// SUPPLY vs. PRICE CORRELATION
+//   - Scatter plot: # units available (x) vs. avg price that day (y)
+//   - Do prices drop when more units open up, or move independently?
+//   - Correlation coefficient to quantify the relationship
+//
+// PRICE VELOCITY (per unit)
+//   - How fast does a unit's price change after it first appears?
+//   - Do units that sit longer eventually get cheaper, or stay flat?
+//   - Flag units whose price has dropped since first seen
+//
+// UNIT-LEVEL VOLATILITY
+//   - Which specific units have fluctuated most in price?
+//   - Are certain floor plans (A1, A4, etc.) more volatile than others?
+//
+// PREDICTIVE SIGNALS
+//   - If inventory drops below X units, does avg price rise within N days?
+//   - Best day of week to lock in a price based on historical lows
+//   - Alert if today's price for a unit is at/near its historical low
+//
+// =============================================================
+
 const PLAN_COLORS = ['#FF0090','#0CE6DF','#9B84B8','#7A9E7E','#F4A0BF','#5B9EC9','#FF6B35','#E8B86D','#96CEB4','#DDA0DD','#4ECDC4'];
 let unitChartInstance = null;
 let unitChartMode = "min";
