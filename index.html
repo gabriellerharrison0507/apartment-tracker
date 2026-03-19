@@ -5,6 +5,7 @@
 <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>RoomList — Gabby's Move 2026</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {
     --cream: #F0FAFA;
@@ -420,6 +421,19 @@
     font-size: 14px;
   }
 
+  /* UNIT FILTERS */
+  .unit-filter-bar {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .unit-filter-bar select, .unit-filter-bar input[type="number"], .unit-filter-bar input[type="date"] {
+    padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--cream);
+    transition: border-color 0.12s;
+  }
+  .unit-filter-bar select:focus, .unit-filter-bar input:focus { outline: none; border-color: var(--accent); background: var(--white); }
+  .unit-filter-bar input[type="number"] { width: 130px; }
+
   /* VIEW TOGGLE */
   .view-btn {
     padding: 6px 16px; border-radius: 99px; border: 1px solid var(--border);
@@ -614,8 +628,33 @@
     </div>
     <div id="unit-last-updated" style="font-size:12px;color:var(--muted);text-align:right;"></div>
   </div>
+  <div class="unit-filter-bar" id="unit-filters" style="display:none;">
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Plan Type</div>
+      <select id="filter-plan" onchange="applyUnitFilters()">
+        <option value="all">All Plans</option>
+      </select>
+    </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Max Price</div>
+      <input id="filter-price" type="number" placeholder="e.g. 1800" oninput="applyUnitFilters()" />
+    </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Available By</div>
+      <input id="filter-date" type="date" oninput="applyUnitFilters()" />
+    </div>
+    <button onclick="clearUnitFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
+  </div>
+
   <div class="unit-table-wrap" id="unit-table-wrap">
     <div class="empty-state">Loading...</div>
+  </div>
+
+  <div id="unit-chart-section" style="display:none;margin-top:48px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Price Trends</h3>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <canvas id="unit-chart"></canvas>
+    </div>
   </div>
   <div class="unit-import" style="margin-top:32px;">
     <div class="detail-label" style="margin-bottom:6px;">How to update daily</div>
@@ -1184,65 +1223,128 @@ function addUnitSnapshot() {
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
 
+let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "";
+
+function applyUnitFilters() {
+  unitFilterPlan = document.getElementById("filter-plan").value;
+  unitFilterMaxPrice = document.getElementById("filter-price").value;
+  unitFilterDate = document.getElementById("filter-date").value;
+  renderUnitTable();
+}
+function clearUnitFilters() {
+  document.getElementById("filter-plan").value = "all";
+  document.getElementById("filter-price").value = "";
+  document.getElementById("filter-date").value = "";
+  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = "";
+  renderUnitTable();
+}
+
 function renderUnitTable() {
   const wrap = document.getElementById("unit-table-wrap");
   if (!unitSnapshots.length) {
-    wrap.innerHTML = '<div class="empty-state">No snapshots yet — paste JSON above and click Add Today\'s Snapshot.</div>';
+    wrap.innerHTML = '<div class="empty-state">No snapshots yet — use the bookmarklet on the Lyra floor plans page to import data.</div>';
+    document.getElementById("unit-filters").style.display = "none";
+    renderUnitChart();
     return;
   }
 
-  // Collect all units ever seen, keyed by UnitCode
-  const allUnits = {};
-  unitSnapshots.forEach(s => {
-    Object.entries(s.units).forEach(([code, u]) => {
-      if (!allUnits[code]) allUnits[code] = { plan: u.plan, sqft: u.sqft };
-    });
-  });
+  // Populate plan filter dropdown
+  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort();
+  const planSelect = document.getElementById("filter-plan");
+  const currentPlan = planSelect.value;
+  planSelect.innerHTML = '<option value="all">All Plans</option>' + allPlans.map(p => `<option value="${p}"${p===currentPlan?" selected":""}>${p}</option>`).join("");
+  document.getElementById("unit-filters").style.display = "flex";
 
-  // Sort by plan name then unit code
-  const sortedCodes = Object.keys(allUnits).sort((a, b) => {
-    const pa = allUnits[a].plan, pb = allUnits[b].plan;
-    return pa !== pb ? pa.localeCompare(pb) : a.localeCompare(b);
-  });
+  // Use latest snapshot for today's price, second-to-last for comparison
+  const latest = unitSnapshots[unitSnapshots.length - 1];
+  const prev = unitSnapshots.length > 1 ? unitSnapshots[unitSnapshots.length - 2] : null;
 
-  let html = '<table class="unit-table"><thead><tr>';
-  html += '<th>Plan</th><th>Sq Ft</th><th>Unit</th><th>Avail Date</th>';
-  unitSnapshots.forEach((s, i) => {
-    html += `<th class="date-col">${s.date}</th>`;
-  });
-  html += '</tr></thead><tbody>';
+  // Build rows from latest snapshot only
+  let rows = Object.entries(latest.units).map(([code, u]) => ({
+    code, plan: u.plan, sqft: u.sqft,
+    availDateRaw: u.availDate,
+    availDateFmt: u.availDate ? new Date(u.availDate + "T12:00:00").toLocaleDateString("en-US", {month:"short", day:"numeric"}) : "—",
+    minRent: u.minRent,
+    prevRent: prev?.units[code]?.minRent ?? null
+  }));
 
-  sortedCodes.forEach(code => {
-    const u = allUnits[code];
-    // Get most recent avail date for this unit
-    const latestSnap = [...unitSnapshots].reverse().find(s => s.units[code]);
-    const availDate = latestSnap ? latestSnap.units[code].availDate : "";
-    const formattedDate = availDate ? new Date(availDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+  // Apply filters
+  if (unitFilterPlan !== "all") rows = rows.filter(r => r.plan === unitFilterPlan);
+  if (unitFilterMaxPrice) rows = rows.filter(r => r.minRent <= parseFloat(unitFilterMaxPrice));
+  if (unitFilterDate) rows = rows.filter(r => !r.availDateRaw || r.availDateRaw <= unitFilterDate);
 
+  // Sort by plan then unit code
+  rows.sort((a, b) => a.plan !== b.plan ? a.plan.localeCompare(b.plan) : a.code.localeCompare(b.code));
+
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-state">No units match your filters.</div>';
+    renderUnitChart(); return;
+  }
+
+  let html = `<table class="unit-table"><thead><tr>
+    <th>Plan</th><th>Sq Ft</th><th>Unit</th><th>Avail Date</th>
+    <th class="date-col">Today's Price<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    let cls = "price-same", change = "";
+    if (r.prevRent != null) {
+      if (r.minRent < r.prevRent) { cls = "price-down"; change = `<span style="font-size:11px;"> ↓$${(r.prevRent - r.minRent).toLocaleString()}</span>`; }
+      else if (r.minRent > r.prevRent) { cls = "price-up"; change = `<span style="font-size:11px;"> ↑$${(r.minRent - r.prevRent).toLocaleString()}</span>`; }
+    }
     html += `<tr>
-      <td><strong>${u.plan}</strong></td>
-      <td style="color:var(--muted);">${u.sqft} sqft</td>
-      <td>#${code}</td>
-      <td style="color:var(--muted);">${formattedDate}</td>`;
-
-    unitSnapshots.forEach((s, i) => {
-      const d = s.units[code];
-      if (!d) { html += `<td class="date-col" style="color:var(--muted);">—</td>`; return; }
-      // Find previous price for this unit
-      const prev = unitSnapshots.slice(0, i).reverse().find(ps => ps.units[code]);
-      let cls = "price-same";
-      if (prev) {
-        if (d.minRent < prev.units[code].minRent) cls = "price-down";
-        else if (d.minRent > prev.units[code].minRent) cls = "price-up";
-      }
-      html += `<td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:16px;">$${d.minRent.toLocaleString()}</span></td>`;
-    });
-
-    html += `</tr>`;
+      <td><strong>${r.plan}</strong></td>
+      <td style="color:var(--muted);">${r.sqft} sqft</td>
+      <td>#${r.code}</td>
+      <td style="color:var(--muted);">${r.availDateFmt}</td>
+      <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}</td>
+    </tr>`;
   });
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  renderUnitChart();
+}
+
+const PLAN_COLORS = ['#FF0090','#0CE6DF','#9B84B8','#7A9E7E','#F4A0BF','#5B9EC9','#FF6B35','#E8B86D','#96CEB4','#DDA0DD','#4ECDC4'];
+let unitChartInstance = null;
+
+function renderUnitChart() {
+  const section = document.getElementById("unit-chart-section");
+  if (!section) return;
+  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort();
+  const labels = unitSnapshots.map(s => s.date);
+  const datasets = allPlans.map((plan, i) => ({
+    label: plan,
+    data: unitSnapshots.map(s => {
+      const planUnits = Object.values(s.units).filter(u => u.plan === plan);
+      return planUnits.length ? Math.min(...planUnits.map(u => u.minRent)) : null;
+    }),
+    borderColor: PLAN_COLORS[i % PLAN_COLORS.length],
+    backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + "22",
+    tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6,
+  }));
+
+  if (unitChartInstance) unitChartInstance.destroy();
+  unitChartInstance = new Chart(document.getElementById("unit-chart").getContext("2d"), {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif" }, padding: 16, usePointStyle: true } },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" } } },
+        y: { ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, callback: v => "$" + v.toLocaleString() } }
+      }
+    }
+  });
 }
 </script>
 </body>
