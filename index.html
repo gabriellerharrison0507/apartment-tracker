@@ -718,8 +718,8 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <h3 style="font-family:var(--serif);font-size:24px;">Price Trends</h3>
       <div style="display:flex;gap:4px;">
-        <button id="chart-btn-min" class="filter-btn active" onclick="setChartMode('min')">Min Price</button>
-        <button id="chart-btn-avg" class="filter-btn" onclick="setChartMode('avg')">Avg Price</button>
+        <button id="chart-btn-min" class="filter-btn active" onclick="setChartMode('min')">By Unit #</button>
+        <button id="chart-btn-avg" class="filter-btn" onclick="setChartMode('avg')">Avg by Plan</button>
       </div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
@@ -1665,20 +1665,38 @@ function renderUnitChart() {
   if (unitSnapshots.length < 1) { section.style.display = "none"; return; }
   section.style.display = "";
 
-  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
   const labels = unitSnapshots.map(s => s.date);
-  const datasets = allPlans.map((plan, i) => ({
-    label: plan,
-    data: unitSnapshots.map(s => {
-      const planUnits = Object.values(s.units).filter(u => u.plan === plan);
-      if (!planUnits.length) return null;
-      const rents = planUnits.map(u => u.minRent);
-      return unitChartMode === "avg" ? Math.round(rents.reduce((a,b) => a+b, 0) / rents.length) : Math.min(...rents);
-    }),
-    borderColor: PLAN_COLORS[i % PLAN_COLORS.length],
-    backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + "22",
-    tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6,
-  }));
+  let datasets;
+
+  if (unitChartMode === "min") {
+    // By Unit # — one line per unit code
+    const allCodes = [...new Set(unitSnapshots.flatMap(s => Object.keys(s.units)))]
+      .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+    datasets = allCodes.map((code, i) => {
+      const plan = unitSnapshots.flatMap(s => s.units[code] ? [s.units[code].plan] : [])[0] || code;
+      return {
+        label: `#${code} (${plan})`,
+        data: unitSnapshots.map(s => s.units[code]?.minRent ?? null),
+        borderColor: PLAN_COLORS[i % PLAN_COLORS.length],
+        backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + "22",
+        tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6,
+      };
+    });
+  } else {
+    // Avg by Plan — one line per plan, averaged across all units of that plan
+    const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))]
+      .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+    datasets = allPlans.map((plan, i) => ({
+      label: plan,
+      data: unitSnapshots.map(s => {
+        const rents = Object.values(s.units).filter(u => u.plan === plan).map(u => u.minRent);
+        return rents.length ? Math.round(rents.reduce((a, b) => a + b, 0) / rents.length) : null;
+      }),
+      borderColor: PLAN_COLORS[i % PLAN_COLORS.length],
+      backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + "22",
+      tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6,
+    }));
+  }
 
   if (unitChartInstance) unitChartInstance.destroy();
   unitChartInstance = new Chart(document.getElementById("unit-chart").getContext("2d"), {
