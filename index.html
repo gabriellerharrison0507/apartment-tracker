@@ -1514,13 +1514,26 @@ function renderUnitTable() {
     const isWatched = watchedUnits[r.code] !== undefined;
     const watchedPrice = watchedUnits[r.code];
     const priceDrop = isWatched && r.minRent < watchedPrice ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(watchedPrice - r.minRent).toLocaleString()} since watched</span>` : "";
-    const rowBg = isWatched ? "background:#fff8fb;" : "";
+
+    // Preference scoring: A7 floor 5-6 = dream, A3/A4 floor 5-6 = great, A7 any floor = good, A3/A4 any = ok
+    const isIsland = ["A3","A4","A7"].includes(r.plan);
+    const isTub = r.plan === "A7";
+    const isHighFloor = r.floor >= 5;
+    const isDream = isTub && r.floor === 6;
+    let prefBadge = "";
+    if (isDream) prefBadge = `<span style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+    else if (isTub && isHighFloor) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+    else if (isIsland && isHighFloor) prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
+    else if (isTub) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Has Tub</span>`;
+    else if (isIsland) prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
+
+    const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
     html += `<tr style="${rowBg}">
       <td style="text-align:center;padding:10px 6px;">
         <button onclick="toggleWatch('${r.code}', ${r.minRent})" title="${isWatched ? 'Remove from watch list' : 'Add to watch list'}"
           style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:0;">${isWatched ? "★" : "☆"}</button>
       </td>
-      <td><strong>${r.plan}</strong></td>
+      <td><strong>${r.plan}</strong>${prefBadge}</td>
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}</td>
