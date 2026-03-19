@@ -763,24 +763,7 @@
     </div>
   </div>
 
-  <div class="unit-import" style="margin-top:16px;">
-    <div class="detail-label" style="margin-bottom:6px;">How to update daily</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Drag this button to your bookmarks bar. Then whenever you visit the Lyra floor plans page, click it — it'll extract the data and bring you right back here.</div>
-    <a id="bookmarklet-link" style="display:inline-block;padding:8px 18px;background:var(--accent);color:#fff;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:500;text-decoration:none;cursor:grab;">📋 Lyra → RoomList</a>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px;">Drag the button above to your bookmarks bar, then click it while on <strong>lyraapartments.com/floorplans</strong></div>
-  </div>
-
-  <details style="margin-top:20px;">
-    <summary style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none;">Manual paste (backup)</summary>
-    <div style="margin-top:12px;">
-      <div class="detail-label">Paste units JSON from view-source</div>
-      <textarea id="units-json" class="unit-import" style="margin-top:8px;width:100%;height:80px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--cream);resize:vertical;" placeholder='[{"Id": 33972473, "UnitCode": "431", "Beds": 1, ...}]'></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-        <button class="add-btn" onclick="addUnitSnapshot()">+ Add Today's Snapshot</button>
-        <span id="unit-import-msg" style="font-size:13px;color:var(--muted);"></span>
-      </div>
-    </div>
-  </details>
+  <div id="unit-import-msg" style="font-size:13px;color:var(--muted);margin-top:8px;display:none;"></div>
 </div>
 
 <script>
@@ -1278,63 +1261,6 @@ function setView(v) {
   if (!isList) loadUnitData();
 }
 
-function addUnitSnapshot() {
-  const raw = document.getElementById("units-json").value.trim();
-  const msg = document.getElementById("unit-import-msg");
-  if (!raw) { msg.textContent = "Paste JSON first."; return; }
-  let units;
-  try { units = JSON.parse(raw); } catch(e) { msg.textContent = "Invalid JSON — make sure you copied the full array."; return; }
-  const oneBed = units.filter(u => u.Beds === 1);
-  if (!oneBed.length) { msg.textContent = "No 1-bedroom units found."; return; }
-
-  const today = new Date().toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" });
-  const snapshot = { date: today, units: {} };
-  oneBed.forEach(u => {
-    snapshot.units[u.UnitCode] = {
-      plan: u.FloorplanName, sqft: u.SqFt,
-      availDate: u.AvailableDate ? u.AvailableDate.split("T")[0] : "",
-      minRent: u.MinRent
-    };
-  });
-
-  const existing = unitSnapshots.findIndex(s => s.date === today);
-  if (existing >= 0) unitSnapshots[existing] = snapshot;
-  else unitSnapshots.push(snapshot);
-
-  localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
-  saveToGist();
-  document.getElementById("units-json").value = "";
-  msg.textContent = `✓ Saved for ${today} (${oneBed.length} units)`;
-  renderUnitTable();
-}
-
-// Set bookmarklet href
-(function() {
-  const code = `(function(){
-    var units=null;
-    var scripts=Array.from(document.querySelectorAll('script'));
-    for(var i=0;i<scripts.length;i++){
-      var t=scripts[i].textContent;
-      var idx=t.search(/"UnitCode"/);
-      if(idx===-1)continue;
-      var start=t.lastIndexOf('[',idx);
-      if(start===-1)continue;
-      var depth=0,end=start;
-      for(var j=start;j<t.length;j++){if(t[j]==='[')depth++;else if(t[j]===']'){depth--;if(depth===0){end=j+1;break;}}}
-      try{units=JSON.parse(t.slice(start,end));break;}catch(e){}
-    }
-    if(!units){alert('Could not find units data. Make sure you are on the Lyra floor plans page.');return;}
-    var ob=units.filter(function(u){return u.Beds===1;});
-    if(!ob.length){alert('No 1BR units found on this page.');return;}
-    var today=new Date().toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'numeric'});
-    var snap={date:today,units:{}};
-    ob.forEach(function(u){snap.units[u.UnitCode]={plan:u.FloorplanName,sqft:u.SqFt,availDate:u.AvailableDate?u.AvailableDate.split('T')[0]:'',minRent:u.MinRent};});
-    var encoded=btoa(JSON.stringify(snap));
-    window.open('https://gabriellerharrison0507.github.io/apartment-tracker/#import='+encoded);
-  })();`;
-  const el = document.getElementById("bookmarklet-link");
-  if (el) el.href = "javascript:" + encodeURIComponent(code);
-})();
 
 // ── GIST SYNC ────────────────────────────────────────────────
 const GIST_FILENAME = "lyra-snapshots.json";
