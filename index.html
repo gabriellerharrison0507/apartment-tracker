@@ -1213,16 +1213,19 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
 })();
 
 async function loadUnitData() {
-  // Render local data immediately so the page never hangs
   const el = document.getElementById("unit-last-updated");
+  const wrap = document.getElementById("unit-table-wrap");
   if (unitSnapshots.length) {
-    el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
-  }
-  renderUnitTable();
-  // Then refresh from Gist in the background
-  const updated = await loadFromGist();
-  if (updated) {
-    el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
+    // Have local data — show it immediately, refresh from Gist quietly
+    if (unitSnapshots.length) el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
+    renderUnitTable();
+    const updated = await loadFromGist();
+    if (updated) { el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date; renderUnitTable(); }
+  } else {
+    // No local data — fetch from Gist first, show loading
+    wrap.innerHTML = '<div class="empty-state">Loading from cloud…</div>';
+    const updated = await loadFromGist();
+    if (unitSnapshots.length) el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
     renderUnitTable();
   }
 }
@@ -1259,14 +1262,14 @@ function updateGistUI() {
 async function loadFromGist() {
   if (!gistId) return false;
   try {
-    // Use raw URL — works on all devices with no auth required (public gist)
-    const rawUrl = `https://gist.githubusercontent.com/${GIST_OWNER}/${gistId}/raw/${GIST_FILENAME}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(rawUrl + "?t=" + Date.now(), { signal: controller.signal });
-    clearTimeout(timer);
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { Accept: "application/vnd.github+json" }
+    });
     if (!res.ok) return false;
-    const snaps = await res.json();
+    const data = await res.json();
+    const file = data.files && data.files[GIST_FILENAME];
+    if (!file || !file.content) return false;
+    const snaps = JSON.parse(file.content);
     if (Array.isArray(snaps) && snaps.length) {
       unitSnapshots = snaps;
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
