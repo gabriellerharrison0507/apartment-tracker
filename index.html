@@ -607,22 +607,28 @@
 </main>
 
 <div class="unit-tracker" id="unit-tracker" style="display:none;">
-  <div style="margin-bottom:28px;">
-    <h2 class="room-title">Unit Tracker</h2>
-    <div class="room-meta">1BR pricing &amp; availability at Lyra — updated daily</div>
-  </div>
-  <div class="unit-import">
-    <div class="detail-label">Paste units JSON from view-source</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:4px;">Go to view-source:https://www.lyraapartments.com/floorplans · Search for <code>[{"Id"</code> · Copy the full array</div>
-    <textarea id="units-json" placeholder='[{"Id": 33972473, "UnitCode": "431", "Beds": 1, ...}]'></textarea>
-    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
-      <button class="add-btn" onclick="addUnitSnapshot()">+ Add Today's Snapshot</button>
-      <span id="unit-import-msg" style="font-size:13px;color:var(--muted);"></span>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
+    <div>
+      <h2 class="room-title">Unit Tracker</h2>
+      <div class="room-meta">1BR pricing &amp; availability at Lyra — updated daily at 9am</div>
     </div>
+    <div id="unit-last-updated" style="font-size:12px;color:var(--muted);text-align:right;"></div>
   </div>
   <div class="unit-table-wrap" id="unit-table-wrap">
-    <div class="empty-state">No snapshots yet — paste JSON above and click Add Today's Snapshot.</div>
+    <div class="empty-state">Loading...</div>
   </div>
+  <details style="margin-top:32px;">
+    <summary style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none;">Manual override (if automation fails)</summary>
+    <div class="unit-import" style="margin-top:12px;">
+      <div class="detail-label">Paste units JSON from view-source</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Go to <code>view-source:https://www.lyraapartments.com/floorplans</code> · Search for <code>[{"Id"</code> · Copy the full array</div>
+      <textarea id="units-json" placeholder='[{"Id": 33972473, "UnitCode": "431", "Beds": 1, ...}]'></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+        <button class="add-btn" onclick="addUnitSnapshot()">+ Add Today's Snapshot</button>
+        <span id="unit-import-msg" style="font-size:13px;color:var(--muted);"></span>
+      </div>
+    </div>
+  </details>
 </div>
 
 <script>
@@ -1073,11 +1079,24 @@ renderAll();
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
-const SAVED_SNAPS = localStorage.getItem("aptTracker_unitSnapshots");
-if (SAVED_SNAPS) { try { unitSnapshots = JSON.parse(SAVED_SNAPS); } catch(e) {} }
 
-function saveSnapshots() {
-  localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
+async function loadUnitData() {
+  document.getElementById("unit-table-wrap").innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const res = await fetch("data/snapshots.json?t=" + Date.now());
+    if (res.ok) {
+      unitSnapshots = await res.json();
+      const el = document.getElementById("unit-last-updated");
+      if (unitSnapshots.length) {
+        el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
+      }
+    }
+  } catch(e) {
+    // Fall back to localStorage if file fetch fails (e.g. running locally)
+    const saved = localStorage.getItem("aptTracker_unitSnapshots");
+    if (saved) { try { unitSnapshots = JSON.parse(saved); } catch(e2) {} }
+  }
+  renderUnitTable();
 }
 
 function setView(v) {
@@ -1088,7 +1107,7 @@ function setView(v) {
   document.getElementById("unit-tracker").style.display = isList ? "none" : "";
   document.getElementById("btn-list").className = "view-btn" + (isList ? " active" : "");
   document.getElementById("btn-units").className = "view-btn" + (!isList ? " active" : "");
-  if (!isList) renderUnitTable();
+  if (!isList) loadUnitData();
 }
 
 function addUnitSnapshot() {
@@ -1100,32 +1119,23 @@ function addUnitSnapshot() {
   const oneBed = units.filter(u => u.Beds === 1);
   if (!oneBed.length) { msg.textContent = "No 1-bedroom units found."; return; }
 
-  const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const today = new Date().toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" });
   const snapshot = { date: today, units: {} };
   oneBed.forEach(u => {
     snapshot.units[u.UnitCode] = {
-      plan: u.FloorplanName,
-      sqft: u.SqFt,
+      plan: u.FloorplanName, sqft: u.SqFt,
       availDate: u.AvailableDate ? u.AvailableDate.split("T")[0] : "",
       minRent: u.MinRent
     };
   });
 
-  // Replace if same date already exists, otherwise append
   const existing = unitSnapshots.findIndex(s => s.date === today);
   if (existing >= 0) unitSnapshots[existing] = snapshot;
   else unitSnapshots.push(snapshot);
 
-  saveSnapshots();
+  localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
   document.getElementById("units-json").value = "";
-  msg.textContent = `✓ Snapshot saved for ${today} (${oneBed.length} units)`;
-  renderUnitTable();
-}
-
-function deleteUnitSnapshot(i) {
-  if (!confirm("Remove this snapshot?")) return;
-  unitSnapshots.splice(i, 1);
-  saveSnapshots();
+  msg.textContent = `✓ Saved for ${today} (${oneBed.length} units)`;
   renderUnitTable();
 }
 
@@ -1153,7 +1163,7 @@ function renderUnitTable() {
   let html = '<table class="unit-table"><thead><tr>';
   html += '<th>Plan</th><th>Sq Ft</th><th>Unit</th><th>Avail Date</th>';
   unitSnapshots.forEach((s, i) => {
-    html += `<th class="date-col">${s.date}<br><button onclick="deleteUnitSnapshot(${i})" style="font-size:10px;background:none;border:none;color:#C8BFB5;cursor:pointer;padding:2px 0;font-family:var(--sans);">✕ remove</button></th>`;
+    html += `<th class="date-col">${s.date}</th>`;
   });
   html += '</tr></thead><tbody>';
 

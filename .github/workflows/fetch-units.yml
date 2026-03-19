@@ -1,0 +1,35 @@
+name: Fetch Lyra Unit Prices
+
+on:
+  schedule:
+    - cron: '0 15 * * *'  # 9am MDT (UTC-6) daily
+  workflow_dispatch:       # Allow manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch unit prices
+        run: python fetch_units.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/snapshots.json
+          git diff --staged --quiet || git commit -m "Daily unit snapshot $(date -u +'%Y-%m-%d')"
+          git push
