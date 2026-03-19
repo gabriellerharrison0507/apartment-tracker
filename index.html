@@ -562,10 +562,10 @@
 
     /* Unit filter bar — 2-column grid on mobile */
     .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
-    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; }
+    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
-    .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
+    .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font-size: 13px; }
     .unit-filter-bar button { grid-column: 1 / -1; width: 100%; }
 
     /* Charts — sensible height on mobile */
@@ -1652,8 +1652,8 @@ function renderInventoryChart() {
         tooltip: { callbacks: { label: c => ` ${c.parsed.y} units available` } }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, maxRotation: 90, minRotation: 45 } },
-        y: { beginAtZero: true, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, stepSize: 1 } }
+        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, maxRotation: 90, minRotation: 45 } },
+        y: { beginAtZero: true, afterFit(s) { s.width = 40; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, stepSize: 1 } }
       }
     }
   });
@@ -1706,12 +1706,12 @@ function renderUnitChart() {
       responsive: true,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif" }, padding: 16, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif", size: 11 }, padding: 10, usePointStyle: true, boxWidth: 8 } },
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, maxRotation: 90, minRotation: 45 } },
-        y: { ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, callback: v => "$" + v.toLocaleString() } }
+        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, maxRotation: 90, minRotation: 45 } },
+        y: { afterFit(s) { s.width = 64; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, callback: v => "$" + v.toLocaleString() } }
       }
     }
   });
