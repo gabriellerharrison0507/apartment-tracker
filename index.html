@@ -1275,7 +1275,10 @@ async function loadFromGist() {
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
       return true;
     }
-  } catch(e) { console.error("Gist load failed", e); }
+  } catch(e) {
+    console.error("Gist load failed", e);
+    document.getElementById("unit-last-updated").textContent = "Sync error: " + e.message;
+  }
   return false;
 }
 
