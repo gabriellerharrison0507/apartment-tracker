@@ -1534,6 +1534,9 @@ function renderUnitTable() {
     else if (isGood)     prefBadge = `<span style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
     else if (isHighOnly) prefBadge = `<span style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
 
+    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-06-01";
+    const dateBadge = isIdealDate ? `<span style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
+
     const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
     html += `<tr style="${rowBg}">
       <td style="text-align:center;padding:10px 6px;">
@@ -1543,7 +1546,7 @@ function renderUnitTable() {
       <td><strong>${r.plan}</strong>${prefBadge}</td>
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
-      <td style="color:var(--muted);">${r.availDateFmt}</td>
+      <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
       <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
     </tr>`;
