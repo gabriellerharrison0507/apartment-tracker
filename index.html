@@ -564,9 +564,11 @@
     .dash-card { padding: 14px 16px; }
     .dash-card-value { font-size: 22px; }
 
-    /* Unit filter bar — 2-column grid: [Plan | Max Price] [Avail By | Floor] [Clear] */
-    .unit-filter-bar { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; padding: 14px 16px; align-items: start; }
+    /* Unit filter bar — custom grid: [Plan | Max Price] [Avail By full-width] [Floor right] [Clear] */
+    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
     .unit-filter-bar > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .unit-filter-bar > div:nth-child(3) { grid-column: 1 / -1; }
+    .unit-filter-bar > div:nth-child(4) { grid-column: 2 / 3; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
     .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; }
