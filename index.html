@@ -561,15 +561,16 @@
     .dash-card-value { font-size: 22px; }
 
     /* Unit filter bar — 2-column grid on mobile */
-    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; }
+    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
+    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
-    .unit-filter-bar input[type="date"] { width: 100%; }
+    .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
     .unit-filter-bar button { grid-column: 1 / -1; width: 100%; }
 
-    /* Charts — taller on mobile */
-    #unit-chart { min-height: 260px; }
-    #unit-inventory-chart { min-height: 220px; }
+    /* Charts — sensible height on mobile */
+    #unit-chart { height: 240px !important; }
+    #unit-inventory-chart { height: 200px !important; }
 
     /* Unit table — compact on mobile */
     .unit-table th, .unit-table td { padding: 8px 10px; font-size: 12px; }
@@ -722,14 +723,14 @@
       </div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-chart" style="min-height:300px;"></canvas>
+      <canvas id="unit-chart"></canvas>
     </div>
   </div>
 
   <div id="unit-inventory-section" style="display:none;margin-top:48px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-inventory-chart" style="min-height:260px;"></canvas>
+      <canvas id="unit-inventory-chart"></canvas>
     </div>
   </div>
 
@@ -1651,7 +1652,7 @@ function renderInventoryChart() {
         tooltip: { callbacks: { label: c => ` ${c.parsed.y} units available` } }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" } } },
+        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, maxRotation: 90, minRotation: 45 } },
         y: { beginAtZero: true, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, stepSize: 1 } }
       }
     }
@@ -1691,7 +1692,7 @@ function renderUnitChart() {
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" } } },
+        x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, maxRotation: 90, minRotation: 45 } },
         y: { ticks: { font: { family: "DM Sans, system-ui, sans-serif" }, callback: v => "$" + v.toLocaleString() } }
       }
     }
