@@ -420,6 +420,45 @@
     font-size: 14px;
   }
 
+  /* VIEW TOGGLE */
+  .view-btn {
+    padding: 6px 16px; border-radius: 99px; border: 1px solid var(--border);
+    background: transparent; font-family: var(--sans); font-size: 13px;
+    color: var(--muted); cursor: pointer; transition: all 0.12s;
+  }
+  .view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  /* UNIT TRACKER */
+  .unit-tracker { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+  .unit-import {
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 32px;
+  }
+  .unit-import textarea {
+    width: 100%; height: 90px; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-family: var(--sans); font-size: 13px; color: var(--ink);
+    background: var(--cream); resize: vertical; margin-top: 8px;
+  }
+  .unit-import textarea:focus { outline: none; border-color: var(--accent); background: var(--white); }
+  .unit-table-wrap { overflow-x: auto; }
+  .unit-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    background: var(--white); border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .unit-table th {
+    padding: 10px 14px; border-bottom: 2px solid var(--border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); font-weight: 500; white-space: nowrap; text-align: left;
+  }
+  .unit-table th.date-col { text-align: center; }
+  .unit-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .unit-table tr:last-child td { border-bottom: none; }
+  .unit-table td.date-col { text-align: center; }
+  .price-up { color: #E06B6B; }
+  .price-down { color: #388E3C; }
+  .price-same { color: var(--ink); }
+
   /* FADE OUT ANIMATION */
   @keyframes itemFadeOut {
     from { opacity: 1; transform: translateY(0); }
@@ -473,6 +512,10 @@
 
 <nav>
   <div class="nav-brand">Room<span>List</span></div>
+  <div style="display:flex;gap:6px;">
+    <button class="view-btn active" id="btn-list" onclick="setView('list')">My List</button>
+    <button class="view-btn" id="btn-units" onclick="setView('units')">Unit Tracker</button>
+  </div>
   <button class="btn-reset" onclick="resetToDefaults()">Reset data</button>
   <div class="nav-total">
     <div style="text-align:right;">
@@ -490,7 +533,7 @@
   </div>
 </nav>
 
-<div class="hero">
+<div class="hero" id="hero-section">
   <div class="hero-eyebrow">Move-in tracker · Denver, CO</div>
   <h1 class="hero-title">Your <em>new place,</em><br>all in one list.</h1>
   <p class="hero-sub">June 2026 · Add items, drop links, track prices.</p>
@@ -516,7 +559,7 @@
 
 <div class="room-nav" id="room-nav"></div>
 
-<main class="main">
+<main class="main" id="main-list">
   <div class="room-header">
     <div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
@@ -562,6 +605,25 @@
 
   <div class="summary-grid" id="summary-grid"></div>
 </main>
+
+<div class="unit-tracker" id="unit-tracker" style="display:none;">
+  <div style="margin-bottom:28px;">
+    <h2 class="room-title">Unit Tracker</h2>
+    <div class="room-meta">1BR pricing &amp; availability at Lyra — updated daily</div>
+  </div>
+  <div class="unit-import">
+    <div class="detail-label">Paste units JSON from view-source</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px;">Go to view-source:https://www.lyraapartments.com/floorplans · Search for <code>[{"Id"</code> · Copy the full array</div>
+    <textarea id="units-json" placeholder='[{"Id": 33972473, "UnitCode": "431", "Beds": 1, ...}]'></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+      <button class="add-btn" onclick="addUnitSnapshot()">+ Add Today's Snapshot</button>
+      <span id="unit-import-msg" style="font-size:13px;color:var(--muted);"></span>
+    </div>
+  </div>
+  <div class="unit-table-wrap" id="unit-table-wrap">
+    <div class="empty-state">No snapshots yet — paste JSON above and click Add Today's Snapshot.</div>
+  </div>
+</div>
 
 <script>
 const ROOMS = ["Kitchen","Bathroom","Bedroom","Living Room","Balcony","Cleaning"];
@@ -1008,6 +1070,125 @@ function renderAll(){
   renderSummary();
 }
 renderAll();
+
+// ── UNIT TRACKER ──────────────────────────────────────────────
+let unitSnapshots = [];
+const SAVED_SNAPS = localStorage.getItem("aptTracker_unitSnapshots");
+if (SAVED_SNAPS) { try { unitSnapshots = JSON.parse(SAVED_SNAPS); } catch(e) {} }
+
+function saveSnapshots() {
+  localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
+}
+
+function setView(v) {
+  const isList = v === "list";
+  document.getElementById("hero-section").style.display = isList ? "" : "none";
+  document.getElementById("room-nav").style.display = isList ? "" : "none";
+  document.getElementById("main-list").style.display = isList ? "" : "none";
+  document.getElementById("unit-tracker").style.display = isList ? "none" : "";
+  document.getElementById("btn-list").className = "view-btn" + (isList ? " active" : "");
+  document.getElementById("btn-units").className = "view-btn" + (!isList ? " active" : "");
+  if (!isList) renderUnitTable();
+}
+
+function addUnitSnapshot() {
+  const raw = document.getElementById("units-json").value.trim();
+  const msg = document.getElementById("unit-import-msg");
+  if (!raw) { msg.textContent = "Paste JSON first."; return; }
+  let units;
+  try { units = JSON.parse(raw); } catch(e) { msg.textContent = "Invalid JSON — make sure you copied the full array."; return; }
+  const oneBed = units.filter(u => u.Beds === 1);
+  if (!oneBed.length) { msg.textContent = "No 1-bedroom units found."; return; }
+
+  const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const snapshot = { date: today, units: {} };
+  oneBed.forEach(u => {
+    snapshot.units[u.UnitCode] = {
+      plan: u.FloorplanName,
+      sqft: u.SqFt,
+      availDate: u.AvailableDate ? u.AvailableDate.split("T")[0] : "",
+      minRent: u.MinRent
+    };
+  });
+
+  // Replace if same date already exists, otherwise append
+  const existing = unitSnapshots.findIndex(s => s.date === today);
+  if (existing >= 0) unitSnapshots[existing] = snapshot;
+  else unitSnapshots.push(snapshot);
+
+  saveSnapshots();
+  document.getElementById("units-json").value = "";
+  msg.textContent = `✓ Snapshot saved for ${today} (${oneBed.length} units)`;
+  renderUnitTable();
+}
+
+function deleteUnitSnapshot(i) {
+  if (!confirm("Remove this snapshot?")) return;
+  unitSnapshots.splice(i, 1);
+  saveSnapshots();
+  renderUnitTable();
+}
+
+function renderUnitTable() {
+  const wrap = document.getElementById("unit-table-wrap");
+  if (!unitSnapshots.length) {
+    wrap.innerHTML = '<div class="empty-state">No snapshots yet — paste JSON above and click Add Today\'s Snapshot.</div>';
+    return;
+  }
+
+  // Collect all units ever seen, keyed by UnitCode
+  const allUnits = {};
+  unitSnapshots.forEach(s => {
+    Object.entries(s.units).forEach(([code, u]) => {
+      if (!allUnits[code]) allUnits[code] = { plan: u.plan, sqft: u.sqft };
+    });
+  });
+
+  // Sort by plan name then unit code
+  const sortedCodes = Object.keys(allUnits).sort((a, b) => {
+    const pa = allUnits[a].plan, pb = allUnits[b].plan;
+    return pa !== pb ? pa.localeCompare(pb) : a.localeCompare(b);
+  });
+
+  let html = '<table class="unit-table"><thead><tr>';
+  html += '<th>Plan</th><th>Sq Ft</th><th>Unit</th><th>Avail Date</th>';
+  unitSnapshots.forEach((s, i) => {
+    html += `<th class="date-col">${s.date}<br><button onclick="deleteUnitSnapshot(${i})" style="font-size:10px;background:none;border:none;color:#C8BFB5;cursor:pointer;padding:2px 0;font-family:var(--sans);">✕ remove</button></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  sortedCodes.forEach(code => {
+    const u = allUnits[code];
+    // Get most recent avail date for this unit
+    const latestSnap = [...unitSnapshots].reverse().find(s => s.units[code]);
+    const availDate = latestSnap ? latestSnap.units[code].availDate : "";
+    const formattedDate = availDate ? new Date(availDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+
+    html += `<tr>
+      <td><strong>${u.plan}</strong></td>
+      <td style="color:var(--muted);">${u.sqft} sqft</td>
+      <td>#${code}</td>
+      <td style="color:var(--muted);">${formattedDate}</td>`;
+
+    unitSnapshots.forEach((s, i) => {
+      const d = s.units[code];
+      if (!d) { html += `<td class="date-col" style="color:var(--muted);">—</td>`; return; }
+      // Find previous price for this unit
+      const prev = unitSnapshots.slice(0, i).reverse().find(ps => ps.units[code]);
+      let cls = "price-same";
+      if (prev) {
+        if (d.minRent < prev.units[code].minRent) cls = "price-down";
+        else if (d.minRent > prev.units[code].minRent) cls = "price-up";
+      }
+      html += `<td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:16px;">$${d.minRent.toLocaleString()}</span></td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
 </script>
 </body>
 </html>
