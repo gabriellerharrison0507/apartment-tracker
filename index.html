@@ -561,7 +561,7 @@
     .dash-card-value { font-size: 22px; }
 
     /* Unit filter bar — 2-column grid: [Plan | Max Price] [Avail By | Floor] [Clear] */
-    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
+    .unit-filter-bar { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; padding: 14px 16px; align-items: start; }
     .unit-filter-bar > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
@@ -1677,7 +1677,7 @@ function renderUnitChart() {
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "right", labels: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, padding: 8, usePointStyle: true, pointStyleWidth: 8 } },
+        legend: { position: "right", labels: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, padding: 8, usePointStyle: true, pointStyle: "circle", pointStyleWidth: 8 } },
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
       },
       scales: {
