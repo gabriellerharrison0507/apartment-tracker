@@ -1213,13 +1213,18 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
 })();
 
 async function loadUnitData() {
-  document.getElementById("unit-table-wrap").innerHTML = '<div class="empty-state">Loading…</div>';
-  await loadFromGist();
+  // Render local data immediately so the page never hangs
   const el = document.getElementById("unit-last-updated");
   if (unitSnapshots.length) {
     el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
   }
   renderUnitTable();
+  // Then refresh from Gist in the background
+  const updated = await loadFromGist();
+  if (updated) {
+    el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
+    renderUnitTable();
+  }
 }
 
 function setView(v) {
@@ -1257,7 +1262,10 @@ async function loadFromGist() {
   try {
     // Use raw URL — works on all devices with no auth required (public gist)
     const rawUrl = `https://gist.githubusercontent.com/${GIST_OWNER}/${gistId}/raw/${GIST_FILENAME}`;
-    const res = await fetch(rawUrl + "?t=" + Date.now()); // cache bust
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(rawUrl + "?t=" + Date.now(), { signal: controller.signal });
+    clearTimeout(timer);
     if (!res.ok) return false;
     const snaps = await res.json();
     if (Array.isArray(snaps) && snaps.length) {
