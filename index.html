@@ -1229,7 +1229,6 @@ async function loadUnitData() {
 
 function setView(v) {
   const isList = v === "list";
-  localStorage.setItem("aptTracker_view", v);
   document.getElementById("hero-section").style.display = isList ? "" : "none";
   document.getElementById("room-nav").style.display = isList ? "" : "none";
   document.getElementById("main-list").style.display = isList ? "" : "none";
@@ -1694,8 +1693,7 @@ function renderUnitChart() {
   });
 }
 
-// Restore last viewed tab — must run after all unit tracker JS is initialized
-{ const v = localStorage.getItem("aptTracker_view"); if (v === "units") setView("units"); }
+
 </script>
 </body>
 </html>
