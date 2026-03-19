@@ -1312,7 +1312,7 @@ let unitChartInstance = null;
 function renderUnitChart() {
   const section = document.getElementById("unit-chart-section");
   if (!section) return;
-  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
+  if (unitSnapshots.length < 1) { section.style.display = "none"; return; }
   section.style.display = "";
 
   const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort();
