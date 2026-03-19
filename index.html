@@ -699,18 +699,18 @@
       </select>
     </div>
     <div>
-      <div class="detail-label" style="margin-bottom:4px;">Max Price</div>
-      <input id="filter-price" type="number" placeholder="e.g. 1800" oninput="applyUnitFilters()" />
+      <div class="detail-label" style="margin-bottom:4px;">Floor</div>
+      <select id="filter-floor" onchange="applyUnitFilters()">
+        <option value="all">All Floors</option>
+      </select>
     </div>
     <div>
       <div class="detail-label" style="margin-bottom:4px;">Available By</div>
       <input id="filter-date" type="date" oninput="applyUnitFilters()" />
     </div>
     <div>
-      <div class="detail-label" style="margin-bottom:4px;">Floor</div>
-      <select id="filter-floor" onchange="applyUnitFilters()">
-        <option value="all">All Floors</option>
-      </select>
+      <div class="detail-label" style="margin-bottom:4px;">Max Price</div>
+      <input id="filter-price" type="number" placeholder="e.g. 1800" oninput="applyUnitFilters()" />
     </div>
     <button onclick="clearUnitFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
   </div>
