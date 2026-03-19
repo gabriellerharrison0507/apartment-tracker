@@ -729,6 +729,41 @@
   </div>
 
   <div class="unit-import" style="margin-top:32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="detail-label">Cloud Sync</div>
+      <div id="gist-badge" style="display:none;font-size:12px;color:#388E3C;font-weight:500;">● Connected</div>
+    </div>
+
+    <!-- Not connected -->
+    <div id="gist-setup">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Connect a GitHub token once and your data syncs across all your devices automatically.</div>
+      <ol style="font-size:13px;color:var(--muted);margin:0 0 14px 16px;line-height:2;">
+        <li>Go to <strong>github.com/settings/tokens</strong> → Generate new token (classic)</li>
+        <li>Give it only the <strong>gist</strong> scope</li>
+        <li>Paste it below and click Connect — we'll create a private Gist for you</li>
+      </ol>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input id="gist-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="detail-input" style="font-family:monospace;font-size:12px;" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="add-btn" onclick="connectGist()">Connect</button>
+          <span id="gist-status" style="font-size:13px;color:var(--muted);"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connected -->
+    <div id="gist-connected" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;color:var(--muted);" id="gist-info"></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="syncFromGist()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">↓ Pull latest</button>
+          <button onclick="disconnectGist()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:#E06B6B;cursor:pointer;">Disconnect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="unit-import" style="margin-top:16px;">
     <div class="detail-label" style="margin-bottom:6px;">How to update daily</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Drag this button to your bookmarks bar. Then whenever you visit the Lyra floor plans page, click it — it'll extract the data and bring you right back here.</div>
     <a id="bookmarklet-link" style="display:inline-block;padding:8px 18px;background:var(--accent);color:#fff;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:500;text-decoration:none;cursor:grab;">📋 Lyra → RoomList</a>
@@ -1215,6 +1250,7 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
         else unitSnapshots.push(snapshot);
       });
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
+      saveToGist();
       history.replaceState(null, "", window.location.pathname);
       setTimeout(() => setView("units"), 100);
     } catch(e) { console.error("Import failed", e); }
@@ -1222,7 +1258,8 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
 })();
 
 async function loadUnitData() {
-  document.getElementById("unit-table-wrap").innerHTML = '<div class="empty-state">Loading...</div>';
+  document.getElementById("unit-table-wrap").innerHTML = '<div class="empty-state">Loading…</div>';
+  if (gistId && gistToken) await loadFromGist();
   const el = document.getElementById("unit-last-updated");
   if (unitSnapshots.length) {
     el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
@@ -1265,6 +1302,7 @@ function addUnitSnapshot() {
   else unitSnapshots.push(snapshot);
 
   localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
+  saveToGist();
   document.getElementById("units-json").value = "";
   msg.textContent = `✓ Saved for ${today} (${oneBed.length} units)`;
   renderUnitTable();
@@ -1297,6 +1335,96 @@ function addUnitSnapshot() {
   const el = document.getElementById("bookmarklet-link");
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
+
+// ── GIST SYNC ────────────────────────────────────────────────
+const GIST_FILENAME = "lyra-snapshots.json";
+let gistId = localStorage.getItem("aptTracker_gistId") || "";
+let gistToken = localStorage.getItem("aptTracker_gistToken") || "";
+
+function updateGistUI() {
+  const connected = !!(gistId && gistToken);
+  document.getElementById("gist-setup").style.display = connected ? "none" : "";
+  document.getElementById("gist-connected").style.display = connected ? "" : "none";
+  document.getElementById("gist-badge").style.display = connected ? "" : "none";
+  if (connected) {
+    document.getElementById("gist-info").textContent = "Gist ID: " + gistId.slice(0, 10) + "… · auto-saves on every import";
+  }
+}
+
+async function loadFromGist() {
+  if (!gistId || !gistToken) return false;
+  try {
+    const res = await fetch("https://api.github.com/gists/" + gistId, {
+      headers: { Authorization: "token " + gistToken, Accept: "application/vnd.github+json" }
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    const file = data.files[GIST_FILENAME];
+    if (!file) return false;
+    const snaps = JSON.parse(file.content);
+    if (Array.isArray(snaps) && snaps.length) {
+      unitSnapshots = snaps;
+      localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
+      return true;
+    }
+  } catch(e) { console.error("Gist load failed", e); }
+  return false;
+}
+
+async function saveToGist() {
+  if (!gistId || !gistToken) return;
+  try {
+    await fetch("https://api.github.com/gists/" + gistId, {
+      method: "PATCH",
+      headers: { Authorization: "token " + gistToken, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+      body: JSON.stringify({ files: { [GIST_FILENAME]: { content: JSON.stringify(unitSnapshots, null, 2) } } })
+    });
+  } catch(e) { console.error("Gist save failed", e); }
+}
+
+async function connectGist() {
+  const token = document.getElementById("gist-token").value.trim();
+  const status = document.getElementById("gist-status");
+  if (!token) { status.textContent = "Paste your token first."; return; }
+  status.textContent = "Connecting…";
+
+  // Create a new private gist
+  try {
+    const res = await fetch("https://api.github.com/gists", {
+      method: "POST",
+      headers: { Authorization: "token " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: "RoomList — Lyra unit snapshots",
+        public: false,
+        files: { [GIST_FILENAME]: { content: JSON.stringify(unitSnapshots.length ? unitSnapshots : [], null, 2) } }
+      })
+    });
+    if (!res.ok) { status.textContent = "Failed — make sure the token has 'gist' scope."; return; }
+    const data = await res.json();
+    gistId = data.id;
+    gistToken = token;
+    localStorage.setItem("aptTracker_gistId", gistId);
+    localStorage.setItem("aptTracker_gistToken", gistToken);
+    status.textContent = "✓ Connected!";
+    updateGistUI();
+  } catch(e) { status.textContent = "Network error — try again."; }
+}
+
+async function syncFromGist() {
+  const ok = await loadFromGist();
+  if (ok) { renderUnitTable(); alert("Pulled latest data from Gist (" + unitSnapshots.length + " snapshots)."); }
+  else alert("Could not reach Gist. Check your connection.");
+}
+
+function disconnectGist() {
+  if (!confirm("Disconnect Gist sync? Your local data stays, but won't sync across devices.")) return;
+  gistId = ""; gistToken = "";
+  localStorage.removeItem("aptTracker_gistId");
+  localStorage.removeItem("aptTracker_gistToken");
+  updateGistUI();
+}
+
+updateGistUI();
 
 function exportSnapshots() {
   if (!unitSnapshots.length) { alert("No snapshot data to export yet."); return; }
