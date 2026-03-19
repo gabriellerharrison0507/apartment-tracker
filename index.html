@@ -1515,17 +1515,22 @@ function renderUnitTable() {
     const watchedPrice = watchedUnits[r.code];
     const priceDrop = isWatched && r.minRent < watchedPrice ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(watchedPrice - r.minRent).toLocaleString()} since watched</span>` : "";
 
-    // Preference scoring: A7 floor 5-6 = dream, A3/A4 floor 5-6 = great, A7 any floor = good, A3/A4 any = ok
-    const isIsland = ["A3","A4","A7"].includes(r.plan);
-    const isTub = r.plan === "A7";
+    // Preference scoring based on floor plan features:
+    // Island + Tub: A4, A7 (A7 favored — larger sqft)
+    // Island only: A3
+    // No island, no tub: A1, A2, A5, A6, A8, A9, A10, A11
+    const hasTub = ["A4","A7"].includes(r.plan);
+    const hasIsland = ["A3","A4","A7"].includes(r.plan);
     const isHighFloor = r.floor >= 5;
-    const isDream = isTub && r.floor === 6;
+    const isDream  = r.plan === "A7" && r.floor === 6;                          // perfect unit
+    const isTopPick = !isDream && (r.plan === "A7" || (hasTub && isHighFloor)); // A7 any floor, or A4 floor 5-6
+    const isGreat   = !isDream && !isTopPick && (hasTub || (hasIsland && isHighFloor)); // A4 lower, A3 high floor
+    const isGood    = !isDream && !isTopPick && !isGreat && hasIsland;          // A3 lower floors
     let prefBadge = "";
-    if (isDream) prefBadge = `<span style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
-    else if (isTub && isHighFloor) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
-    else if (isIsland && isHighFloor) prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
-    else if (isTub) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Has Tub</span>`;
-    else if (isIsland) prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
+    if (isDream)    prefBadge = `<span style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+    else if (isTopPick) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+    else if (isGreat)   prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ Great</span>`;
+    else if (isGood)    prefBadge = `<span style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
 
     const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
     html += `<tr style="${rowBg}">
