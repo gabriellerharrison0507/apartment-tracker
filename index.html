@@ -1261,7 +1261,7 @@ function renderUnitTable() {
   }
 
   // Populate plan filter dropdown
-  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort();
+  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
   const planSelect = document.getElementById("filter-plan");
   const currentPlan = planSelect.value;
   planSelect.innerHTML = '<option value="all">All Plans</option>' + allPlans.map(p => `<option value="${p}"${p===currentPlan?" selected":""}>${p}</option>`).join("");
@@ -1291,7 +1291,7 @@ function renderUnitTable() {
     if (unitFilterSort === "price-desc") return b.minRent - a.minRent;
     if (unitFilterSort === "avail") return (a.availDateRaw || "9999") > (b.availDateRaw || "9999") ? 1 : -1;
     if (unitFilterSort === "sqft") return a.sqft - b.sqft;
-    return a.plan !== b.plan ? a.plan.localeCompare(b.plan) : a.code.localeCompare(b.code); // default: plan
+    return a.plan !== b.plan ? a.plan.localeCompare(b.plan, undefined, {numeric:true}) : a.code.localeCompare(b.code, undefined, {numeric:true}); // default: plan
   });
 
   if (!rows.length) {
@@ -1333,7 +1333,7 @@ function renderUnitChart() {
   if (unitSnapshots.length < 1) { section.style.display = "none"; return; }
   section.style.display = "";
 
-  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort();
+  const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
   const labels = unitSnapshots.map(s => s.date);
   const datasets = allPlans.map((plan, i) => ({
     label: plan,
