@@ -1611,7 +1611,7 @@ function renderUnitChart() {
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif" }, padding: 16, usePointStyle: true, pointStyle: "circle" } },
+        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif" }, padding: 16, boxWidth: 12, boxHeight: 12 } },
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
       },
       scales: {
