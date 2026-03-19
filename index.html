@@ -1259,7 +1259,7 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
 
 async function loadUnitData() {
   document.getElementById("unit-table-wrap").innerHTML = '<div class="empty-state">Loading…</div>';
-  if (gistId && gistToken) await loadFromGist();
+  await loadFromGist();
   const el = document.getElementById("unit-last-updated");
   if (unitSnapshots.length) {
     el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
@@ -1338,7 +1338,8 @@ function addUnitSnapshot() {
 
 // ── GIST SYNC ────────────────────────────────────────────────
 const GIST_FILENAME = "lyra-snapshots.json";
-let gistId = localStorage.getItem("aptTracker_gistId") || "";
+const GIST_ID_DEFAULT = "c065e02f377c8016e24c5dc3a62f8ee0";
+let gistId = localStorage.getItem("aptTracker_gistId") || GIST_ID_DEFAULT;
 let gistToken = localStorage.getItem("aptTracker_gistToken") || "";
 
 function updateGistUI() {
@@ -1352,11 +1353,11 @@ function updateGistUI() {
 }
 
 async function loadFromGist() {
-  if (!gistId || !gistToken) return false;
+  if (!gistId) return false;
   try {
-    const res = await fetch("https://api.github.com/gists/" + gistId, {
-      headers: { Authorization: "token " + gistToken, Accept: "application/vnd.github+json" }
-    });
+    const headers = { Accept: "application/vnd.github+json" };
+    if (gistToken) headers.Authorization = "token " + gistToken;
+    const res = await fetch("https://api.github.com/gists/" + gistId, { headers });
     if (!res.ok) return false;
     const data = await res.json();
     const file = data.files[GIST_FILENAME];
