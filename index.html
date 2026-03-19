@@ -709,6 +709,7 @@
       <div class="detail-label" style="margin-bottom:4px;">Max Price</div>
       <input id="filter-price" type="number" placeholder="e.g. 1800" oninput="applyUnitFilters()" />
     </div>
+    <button id="watched-filter-btn" onclick="toggleWatchedFilter()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">★ Watched Only</button>
     <button onclick="clearUnitFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
   </div>
 
@@ -1188,8 +1189,9 @@ renderAll();
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
-let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all";
+let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all", unitFilterWatched = false;
 let unitSortCol = "plan", unitSortDir = "asc";
+let watchedUnits = JSON.parse(localStorage.getItem("aptTracker_watched") || "{}"); // { code: priceWhenWatched }
 
 // Load from localStorage on startup
 const _savedSnaps = localStorage.getItem("aptTracker_unitSnapshots");
@@ -1404,8 +1406,22 @@ function clearUnitFilters() {
   document.getElementById("filter-price").value = "";
   document.getElementById("filter-date").value = "";
   document.getElementById("filter-floor").value = "all";
-  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = ""; unitFilterFloor = "all";
+  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = ""; unitFilterFloor = "all"; unitFilterWatched = false;
+  const wbtn = document.getElementById("watched-filter-btn");
+  if (wbtn) { wbtn.style.background = "transparent"; wbtn.style.borderColor = "var(--border)"; wbtn.style.color = "var(--muted)"; }
   unitSortCol = "plan"; unitSortDir = "asc";
+  renderUnitTable();
+}
+function toggleWatch(code, currentPrice) {
+  if (watchedUnits[code] !== undefined) delete watchedUnits[code];
+  else watchedUnits[code] = currentPrice;
+  localStorage.setItem("aptTracker_watched", JSON.stringify(watchedUnits));
+  renderUnitTable();
+}
+function toggleWatchedFilter() {
+  unitFilterWatched = !unitFilterWatched;
+  const btn = document.getElementById("watched-filter-btn");
+  if (btn) { btn.style.background = unitFilterWatched ? "#fde8f0" : "transparent"; btn.style.borderColor = unitFilterWatched ? "#f9a8c9" : "var(--border)"; btn.style.color = unitFilterWatched ? "#c0306a" : "var(--muted)"; }
   renderUnitTable();
 }
 
@@ -1458,6 +1474,7 @@ function renderUnitTable() {
   if (unitFilterMaxPrice) rows = rows.filter(r => r.minRent <= parseFloat(unitFilterMaxPrice));
   if (unitFilterDate) rows = rows.filter(r => !r.availDateRaw || r.availDateRaw <= unitFilterDate);
   if (unitFilterFloor !== "all") rows = rows.filter(r => r.floor === parseInt(unitFilterFloor));
+  if (unitFilterWatched) rows = rows.filter(r => watchedUnits[r.code] !== undefined);
 
   // Sort
   rows.sort((a, b) => {
@@ -1479,6 +1496,7 @@ function renderUnitTable() {
 
   const thStyle = "cursor:pointer;user-select:none;";
   let html = `<table class="unit-table"><thead><tr>
+    <th style="width:36px;"></th>
     <th style="${thStyle}" onclick="setSortCol('plan')">Plan${sortArrow('plan')}</th>
     <th style="${thStyle}" onclick="setSortCol('sqft')">Sq Ft${sortArrow('sqft')}</th>
     <th style="${thStyle}" onclick="setSortCol('floor')">Unit${sortArrow('floor')}</th>
@@ -1493,13 +1511,21 @@ function renderUnitTable() {
       if (r.minRent < r.prevRent) { cls = "price-down"; change = `<span style="font-size:11px;"> ↓$${(r.prevRent - r.minRent).toLocaleString()}</span>`; }
       else if (r.minRent > r.prevRent) { cls = "price-up"; change = `<span style="font-size:11px;"> ↑$${(r.minRent - r.prevRent).toLocaleString()}</span>`; }
     }
-    html += `<tr>
+    const isWatched = watchedUnits[r.code] !== undefined;
+    const watchedPrice = watchedUnits[r.code];
+    const priceDrop = isWatched && r.minRent < watchedPrice ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(watchedPrice - r.minRent).toLocaleString()} since watched</span>` : "";
+    const rowBg = isWatched ? "background:#fff8fb;" : "";
+    html += `<tr style="${rowBg}">
+      <td style="text-align:center;padding:10px 6px;">
+        <button onclick="toggleWatch('${r.code}', ${r.minRent})" title="${isWatched ? 'Remove from watch list' : 'Add to watch list'}"
+          style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:0;">${isWatched ? "★" : "☆"}</button>
+      </td>
       <td><strong>${r.plan}</strong></td>
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
-      <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}</td>
+      <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
     </tr>`;
   });
 
@@ -1536,6 +1562,21 @@ function renderUnitTable() {
 //   - If inventory drops below X units, does avg price rise within N days?
 //   - Best day of week to lock in a price based on historical lows
 //   - Alert if today's price for a unit is at/near its historical low
+//
+// SEASONAL ANALYSIS (unlock after ~3-4 months of data)
+//   - Avg price by month — do prices spike in spring/summer as demand rises?
+//   - Inventory by season — do more units open up in winter when demand drops?
+//   - Compare Jan–Mar (slow) vs. Apr–Jun (peak leasing season) price delta
+//   - Identify the cheapest month to sign a lease historically
+//   - Goal context: prices likely rise Apr–Jun as summer move-ins compete —
+//     watch for this signal to know when to lock in
+//
+// TIME-SCALE AUTO-SCALING FOR PRICE CHART
+//   - < 30 days of data  → show daily prices (current behavior)
+//   - 30+ days of data   → collapse to weekly averages (avg price per week)
+//   - 30+ weeks of data  → collapse to monthly averages (avg price per month)
+//   - This keeps the chart readable as the dataset grows
+//   - Add a manual toggle so user can always zoom in/out regardless of auto-scale
 //
 // =============================================================
 
