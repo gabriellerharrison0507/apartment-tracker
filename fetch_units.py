@@ -70,7 +70,14 @@ def main():
         with open(SNAPSHOTS_FILE, "r") as f:
             snapshots = json.load(f)
 
-    snapshot = fetch_units()
+    try:
+        snapshot = fetch_units()
+    except requests.HTTPError as e:
+        print(f"WARNING: HTTP error fetching page: {e}. Skipping today.")
+        return
+    except Exception as e:
+        print(f"WARNING: Failed to fetch units: {e}. Skipping today.")
+        return
 
     existing = next((i for i, s in enumerate(snapshots) if s["date"] == snapshot["date"]), None)
     if existing is not None:
