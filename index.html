@@ -1186,6 +1186,8 @@ renderAll();
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
+let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all";
+let unitSortCol = "plan", unitSortDir = "asc";
 
 // Load from localStorage on startup
 const _savedSnaps = localStorage.getItem("aptTracker_unitSnapshots");
@@ -1249,15 +1251,7 @@ const GIST_OWNER = "gabriellerharrison0507";
 let gistId = localStorage.getItem("aptTracker_gistId") || GIST_ID_DEFAULT;
 let gistToken = localStorage.getItem("aptTracker_gistToken") || "";
 
-function updateGistUI() {
-  const connected = !!(gistId && gistToken);
-  document.getElementById("gist-setup").style.display = connected ? "none" : "";
-  document.getElementById("gist-connected").style.display = connected ? "" : "none";
-  document.getElementById("gist-badge").style.display = connected ? "" : "none";
-  if (connected) {
-    document.getElementById("gist-info").textContent = "Gist ID: " + gistId.slice(0, 10) + "… · auto-saves on every import";
-  }
-}
+function updateGistUI() { /* Cloud Sync UI removed — Gist ID is hardcoded */ }
 
 async function loadFromGist() {
   if (!gistId) return false;
@@ -1461,8 +1455,6 @@ function renderDashboard() {
     </div>`).join("");
 }
 
-let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterFloor = "all";
-let unitSortCol = "plan", unitSortDir = "asc";
 
 function setSortCol(col) {
   if (unitSortCol === col) unitSortDir = unitSortDir === "asc" ? "desc" : "asc";
