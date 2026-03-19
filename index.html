@@ -1548,7 +1548,7 @@ function renderUnitTable() {
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
-      <td class="date-col">${r.minRent > 1800 ? `<span style="display:block;font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-bottom:3px;display:inline-block;">Too High</span><br>` : ""}<span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
+      <td class="date-col" style="position:relative;">${r.minRent > 1800 ? `<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;">Too High</span>` : ""}<span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
     </tr>`;
   });
 
