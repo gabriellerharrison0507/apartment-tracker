@@ -1,29 +1,19 @@
-import requests
 import json
 import re
 import os
 from datetime import datetime
+from playwright.sync_api import sync_playwright
 
 SNAPSHOTS_FILE = "data/snapshots.json"
 URL = "https://www.lyraapartments.com/floorplans"
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Cache-Control": "max-age=0",
-}
-
 def fetch_units():
-    response = requests.get(URL, headers=HEADERS, timeout=30)
-    response.raise_for_status()
-    html = response.text
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(URL, wait_until="networkidle", timeout=60000)
+        html = page.content()
+        browser.close()
 
     # Find the JSON units array embedded in the page
     match = re.search(r'\[\s*\{\s*"Id"\s*:', html)
@@ -72,9 +62,6 @@ def main():
 
     try:
         snapshot = fetch_units()
-    except requests.HTTPError as e:
-        print(f"WARNING: HTTP error fetching page: {e}. Skipping today.")
-        return
     except Exception as e:
         print(f"WARNING: Failed to fetch units: {e}. Skipping today.")
         return
