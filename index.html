@@ -560,17 +560,17 @@
     .dash-card { padding: 14px 16px; }
     .dash-card-value { font-size: 22px; }
 
-    /* Unit filter bar — 2-column grid on mobile */
-    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
-    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden; }
+    /* Unit filter bar — single column on mobile, no overlap */
+    .unit-filter-bar { flex-direction: column; gap: 8px; padding: 14px 16px; }
+    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
-    .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font-size: 13px; }
-    .unit-filter-bar button { grid-column: 1 / -1; width: 100%; }
+    .unit-filter-bar input[type="date"] { width: 100%; box-sizing: border-box; }
+    .unit-filter-bar button { width: 100%; margin-top: 4px; }
 
-    /* Charts — sensible height on mobile */
-    #unit-chart { height: 240px !important; }
-    #unit-inventory-chart { height: 200px !important; }
+    /* Charts — fixed height, legend on right */
+    .chart-wrap { height: 220px; position: relative; }
+    .chart-wrap-tall { height: 260px; position: relative; }
 
     /* Unit table — compact on mobile */
     .unit-table th, .unit-table td { padding: 8px 10px; font-size: 12px; }
@@ -723,14 +723,14 @@
       </div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-chart"></canvas>
+      <div class="chart-wrap-tall"><canvas id="unit-chart"></canvas></div>
     </div>
   </div>
 
   <div id="unit-inventory-section" style="display:none;margin-top:48px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <canvas id="unit-inventory-chart"></canvas>
+      <div class="chart-wrap"><canvas id="unit-inventory-chart"></canvas></div>
     </div>
   </div>
 
@@ -1647,13 +1647,14 @@ function renderInventoryChart() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: c => ` ${c.parsed.y} units available` } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, maxRotation: 90, minRotation: 45 } },
-        y: { beginAtZero: true, afterFit(s) { s.width = 40; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, stepSize: 1 } }
+        y: { beginAtZero: true, afterFit(s) { s.width = 40; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, stepSize: 1, maxTicksLimit: 6 } }
       }
     }
   });
@@ -1704,14 +1705,15 @@ function renderUnitChart() {
     data: { labels, datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "bottom", labels: { font: { family: "DM Sans, system-ui, sans-serif", size: 11 }, padding: 10, usePointStyle: true, boxWidth: 8 } },
+        legend: { position: "right", labels: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, padding: 8, usePointStyle: true, pointStyleWidth: 8 } },
         tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${c.parsed.y?.toLocaleString() ?? "—"}` } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, maxRotation: 90, minRotation: 45 } },
-        y: { afterFit(s) { s.width = 64; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, callback: v => "$" + v.toLocaleString() } }
+        y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: "DM Sans, system-ui, sans-serif", size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } }
       }
     }
   });
