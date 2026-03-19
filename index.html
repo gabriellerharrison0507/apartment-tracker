@@ -560,13 +560,13 @@
     .dash-card { padding: 14px 16px; }
     .dash-card-value { font-size: 22px; }
 
-    /* Unit filter bar — single column on mobile, no overlap */
-    .unit-filter-bar { flex-direction: column; gap: 8px; padding: 14px 16px; }
-    .unit-filter-bar > div { display: flex; flex-direction: column; gap: 4px; }
+    /* Unit filter bar — 2-column grid: [Plan | Max Price] [Avail By | Floor] [Clear] */
+    .unit-filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; align-items: start; }
+    .unit-filter-bar > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .unit-filter-bar select,
     .unit-filter-bar input[type="number"],
-    .unit-filter-bar input[type="date"] { width: 100%; box-sizing: border-box; }
-    .unit-filter-bar button { width: 100%; margin-top: 4px; }
+    .unit-filter-bar input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; }
+    .unit-filter-bar button { grid-column: 1 / -1; width: 100%; margin-top: 2px; }
 
     /* Charts — fixed height, legend on right */
     .chart-wrap { height: 220px; position: relative; }
@@ -1217,6 +1217,8 @@ function renderAll(){
   renderSummary();
 }
 renderAll();
+// Restore last viewed tab
+{ const v = localStorage.getItem("aptTracker_view"); if (v === "units") setView("units"); }
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
@@ -1258,6 +1260,7 @@ async function loadUnitData() {
 
 function setView(v) {
   const isList = v === "list";
+  localStorage.setItem("aptTracker_view", v);
   document.getElementById("hero-section").style.display = isList ? "" : "none";
   document.getElementById("room-nav").style.display = isList ? "" : "none";
   document.getElementById("main-list").style.display = isList ? "" : "none";
