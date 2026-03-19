@@ -1159,14 +1159,21 @@ function addUnitSnapshot() {
 // Set bookmarklet href
 (function() {
   const code = `(function(){
-    var h=document.documentElement.innerHTML;
-    var m=h.match(/\\[\\s*\\{\\s*"Id"\\s*:/);
-    if(!m){alert('Could not find units data on this page');return;}
-    var s=h.indexOf(m[0]),d=0,e=s;
-    for(var i=s;i<h.length;i++){if(h[i]==='[')d++;else if(h[i]===']'){d--;if(d===0){e=i+1;break;}}}
-    var units=JSON.parse(h.slice(s,e));
+    var units=null;
+    var scripts=Array.from(document.querySelectorAll('script'));
+    for(var i=0;i<scripts.length;i++){
+      var t=scripts[i].textContent;
+      var idx=t.search(/"UnitCode"/);
+      if(idx===-1)continue;
+      var start=t.lastIndexOf('[',idx);
+      if(start===-1)continue;
+      var depth=0,end=start;
+      for(var j=start;j<t.length;j++){if(t[j]==='[')depth++;else if(t[j]===']'){depth--;if(depth===0){end=j+1;break;}}}
+      try{units=JSON.parse(t.slice(start,end));break;}catch(e){}
+    }
+    if(!units){alert('Could not find units data. Make sure you are on the Lyra floor plans page.');return;}
     var ob=units.filter(function(u){return u.Beds===1;});
-    if(!ob.length){alert('No 1BR units found');return;}
+    if(!ob.length){alert('No 1BR units found on this page.');return;}
     var today=new Date().toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'numeric'});
     var snap={date:today,units:{}};
     ob.forEach(function(u){snap.units[u.UnitCode]={plan:u.FloorplanName,sqft:u.SqFt,availDate:u.AvailableDate?u.AvailableDate.split('T')[0]:'',minRent:u.MinRent};});
