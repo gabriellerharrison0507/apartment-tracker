@@ -643,6 +643,16 @@
       <div class="detail-label" style="margin-bottom:4px;">Available By</div>
       <input id="filter-date" type="date" oninput="applyUnitFilters()" />
     </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Sort By</div>
+      <select id="filter-sort" onchange="applyUnitFilters()">
+        <option value="plan">Plan (A1, A2...)</option>
+        <option value="price">Price (low → high)</option>
+        <option value="price-desc">Price (high → low)</option>
+        <option value="avail">Available Date</option>
+        <option value="sqft">Sq Ft</option>
+      </select>
+    </div>
     <button onclick="clearUnitFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
   </div>
 
@@ -1223,19 +1233,21 @@ function addUnitSnapshot() {
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
 
-let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "";
+let unitFilterPlan = "all", unitFilterMaxPrice = "", unitFilterDate = "", unitFilterSort = "plan";
 
 function applyUnitFilters() {
   unitFilterPlan = document.getElementById("filter-plan").value;
   unitFilterMaxPrice = document.getElementById("filter-price").value;
   unitFilterDate = document.getElementById("filter-date").value;
+  unitFilterSort = document.getElementById("filter-sort").value;
   renderUnitTable();
 }
 function clearUnitFilters() {
   document.getElementById("filter-plan").value = "all";
   document.getElementById("filter-price").value = "";
   document.getElementById("filter-date").value = "";
-  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = "";
+  document.getElementById("filter-sort").value = "plan";
+  unitFilterPlan = "all"; unitFilterMaxPrice = ""; unitFilterDate = ""; unitFilterSort = "plan";
   renderUnitTable();
 }
 
@@ -1273,8 +1285,14 @@ function renderUnitTable() {
   if (unitFilterMaxPrice) rows = rows.filter(r => r.minRent <= parseFloat(unitFilterMaxPrice));
   if (unitFilterDate) rows = rows.filter(r => !r.availDateRaw || r.availDateRaw <= unitFilterDate);
 
-  // Sort by plan then unit code
-  rows.sort((a, b) => a.plan !== b.plan ? a.plan.localeCompare(b.plan) : a.code.localeCompare(b.code));
+  // Sort
+  rows.sort((a, b) => {
+    if (unitFilterSort === "price") return a.minRent - b.minRent;
+    if (unitFilterSort === "price-desc") return b.minRent - a.minRent;
+    if (unitFilterSort === "avail") return (a.availDateRaw || "9999") > (b.availDateRaw || "9999") ? 1 : -1;
+    if (unitFilterSort === "sqft") return a.sqft - b.sqft;
+    return a.plan !== b.plan ? a.plan.localeCompare(b.plan) : a.code.localeCompare(b.code); // default: plan
+  });
 
   if (!rows.length) {
     wrap.innerHTML = '<div class="empty-state">No units match your filters.</div>';
