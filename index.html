@@ -1526,11 +1526,13 @@ function renderUnitTable() {
     const isTopPick = !isDream && (r.plan === "A7" || (hasTub && isHighFloor)); // A7 any floor, or A4 floor 5-6
     const isGreat   = !isDream && !isTopPick && (hasTub || (hasIsland && isHighFloor)); // A4 lower, A3 high floor
     const isGood    = !isDream && !isTopPick && !isGreat && hasIsland;          // A3 lower floors
+    const isHighOnly = !isDream && !isTopPick && !isGreat && !isGood && isHighFloor; // no island/tub but floor 5-6
     let prefBadge = "";
-    if (isDream)    prefBadge = `<span style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
-    else if (isTopPick) prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
-    else if (isGreat)   prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ Great</span>`;
-    else if (isGood)    prefBadge = `<span style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
+    if (isDream)      prefBadge = `<span style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+    else if (isTopPick)  prefBadge = `<span style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+    else if (isGreat)    prefBadge = `<span style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ Great</span>`;
+    else if (isGood)     prefBadge = `<span style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
+    else if (isHighOnly) prefBadge = `<span style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
 
     const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
     html += `<tr style="${rowBg}">
