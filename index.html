@@ -1388,25 +1388,46 @@ async function connectGist() {
   if (!token) { status.textContent = "Paste your token first."; return; }
   status.textContent = "Connecting…";
 
-  // Create a new private gist
   try {
-    const res = await fetch("https://api.github.com/gists", {
-      method: "POST",
-      headers: { Authorization: "token " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
-      body: JSON.stringify({
-        description: "RoomList — Lyra unit snapshots",
-        public: false,
-        files: { [GIST_FILENAME]: { content: JSON.stringify(unitSnapshots.length ? unitSnapshots : [], null, 2) } }
-      })
+    // Search existing gists for the RoomList one first
+    const listRes = await fetch("https://api.github.com/gists?per_page=100", {
+      headers: { Authorization: "token " + token, Accept: "application/vnd.github+json" }
     });
-    if (!res.ok) { status.textContent = "Failed — make sure the token has 'gist' scope."; return; }
-    const data = await res.json();
-    gistId = data.id;
-    gistToken = token;
-    localStorage.setItem("aptTracker_gistId", gistId);
-    localStorage.setItem("aptTracker_gistToken", gistToken);
-    status.textContent = "✓ Connected!";
-    updateGistUI();
+    if (!listRes.ok) { status.textContent = "Failed — make sure the token has 'gist' scope."; return; }
+    const gists = await listRes.json();
+    const existing = gists.find(g => g.description === "RoomList — Lyra unit snapshots" && g.files[GIST_FILENAME]);
+
+    if (existing) {
+      // Found the existing Gist — link to it and pull data
+      gistId = existing.id;
+      gistToken = token;
+      localStorage.setItem("aptTracker_gistId", gistId);
+      localStorage.setItem("aptTracker_gistToken", gistToken);
+      status.textContent = "✓ Found existing Gist, pulling data…";
+      updateGistUI();
+      const ok = await loadFromGist();
+      if (ok) { renderUnitTable(); status.textContent = "✓ Connected & synced!"; }
+      else { status.textContent = "✓ Connected (Gist is empty — run the scraper first)."; }
+    } else {
+      // No existing Gist — create one
+      const createRes = await fetch("https://api.github.com/gists", {
+        method: "POST",
+        headers: { Authorization: "token " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "RoomList — Lyra unit snapshots",
+          public: false,
+          files: { [GIST_FILENAME]: { content: JSON.stringify(unitSnapshots.length ? unitSnapshots : [], null, 2) } }
+        })
+      });
+      if (!createRes.ok) { status.textContent = "Failed to create Gist — check token scope."; return; }
+      const data = await createRes.json();
+      gistId = data.id;
+      gistToken = token;
+      localStorage.setItem("aptTracker_gistId", gistId);
+      localStorage.setItem("aptTracker_gistToken", gistToken);
+      status.textContent = "✓ Connected!";
+      updateGistUI();
+    }
   } catch(e) { status.textContent = "Network error — try again."; }
 }
 
