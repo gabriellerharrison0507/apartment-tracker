@@ -734,40 +734,6 @@
     </div>
   </div>
 
-  <div class="unit-import" style="margin-top:32px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="detail-label">Cloud Sync</div>
-      <div id="gist-badge" style="display:none;font-size:12px;color:#388E3C;font-weight:500;">● Connected</div>
-    </div>
-
-    <!-- Not connected -->
-    <div id="gist-setup">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Connect a GitHub token once and your data syncs across all your devices automatically.</div>
-      <ol style="font-size:13px;color:var(--muted);margin:0 0 14px 16px;line-height:2;">
-        <li>Go to <strong>github.com/settings/tokens</strong> → Generate new token (classic)</li>
-        <li>Give it only the <strong>gist</strong> scope</li>
-        <li>Paste it below and click Connect — we'll create a private Gist for you</li>
-      </ol>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <input id="gist-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="detail-input" style="font-family:monospace;font-size:12px;" />
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="add-btn" onclick="connectGist()">Connect</button>
-          <span id="gist-status" style="font-size:13px;color:var(--muted);"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Connected -->
-    <div id="gist-connected" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <div style="font-size:13px;color:var(--muted);" id="gist-info"></div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="syncFromGist()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">↓ Pull latest</button>
-          <button onclick="disconnectGist()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:#E06B6B;cursor:pointer;">Disconnect</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div id="unit-import-msg" style="font-size:13px;color:var(--muted);margin-top:8px;display:none;"></div>
 </div>
