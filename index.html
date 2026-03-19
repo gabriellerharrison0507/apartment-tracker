@@ -673,7 +673,10 @@
       <h2 class="room-title">Unit Tracker</h2>
       <div class="room-meta">1BR pricing &amp; availability at Lyra — updated daily at 9am</div>
     </div>
-    <div id="unit-last-updated" style="font-size:12px;color:var(--muted);text-align:right;"></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <div id="unit-last-updated" style="font-size:12px;color:var(--muted);"></div>
+      <button onclick="exportSnapshots()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;" title="Copy a link you can open on any device to sync all snapshot data">↗ Share / Sync</button>
+    </div>
   </div>
   <div class="dash-grid" id="dash-grid" style="display:none;"></div>
 
@@ -1203,13 +1206,16 @@ if (_savedSnaps) { try { unitSnapshots = JSON.parse(_savedSnaps); } catch(e) {} 
   const hash = window.location.hash;
   if (hash.startsWith("#import=")) {
     try {
-      const snapshot = JSON.parse(atob(hash.slice(8)));
-      const existing = unitSnapshots.findIndex(s => s.date === snapshot.date);
-      if (existing >= 0) unitSnapshots[existing] = snapshot;
-      else unitSnapshots.push(snapshot);
+      const data = JSON.parse(atob(hash.slice(8)));
+      // Support both single snapshot (bookmarklet) and full array (export/sync)
+      const incoming = Array.isArray(data) ? data : [data];
+      incoming.forEach(snapshot => {
+        const existing = unitSnapshots.findIndex(s => s.date === snapshot.date);
+        if (existing >= 0) unitSnapshots[existing] = snapshot;
+        else unitSnapshots.push(snapshot);
+      });
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
       history.replaceState(null, "", window.location.pathname);
-      // Auto-switch to unit tracker view after import
       setTimeout(() => setView("units"), 100);
     } catch(e) { console.error("Import failed", e); }
   }
@@ -1291,6 +1297,17 @@ function addUnitSnapshot() {
   const el = document.getElementById("bookmarklet-link");
   if (el) el.href = "javascript:" + encodeURIComponent(code);
 })();
+
+function exportSnapshots() {
+  if (!unitSnapshots.length) { alert("No snapshot data to export yet."); return; }
+  const encoded = btoa(JSON.stringify(unitSnapshots));
+  const url = "https://gabriellerharrison0507.github.io/apartment-tracker/#import=" + encoded;
+  navigator.clipboard.writeText(url).then(() => {
+    alert("Link copied! Open it on any device to sync all " + unitSnapshots.length + " snapshot" + (unitSnapshots.length !== 1 ? "s" : "") + ".");
+  }).catch(() => {
+    prompt("Copy this link and open it on your other device:", url);
+  });
+}
 
 function renderDashboard() {
   const grid = document.getElementById("dash-grid");
