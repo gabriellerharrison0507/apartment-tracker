@@ -1338,7 +1338,8 @@ function addUnitSnapshot() {
 
 // ── GIST SYNC ────────────────────────────────────────────────
 const GIST_FILENAME = "lyra-snapshots.json";
-const GIST_ID_DEFAULT = "c065e02f377c8016e24c5dc3a62f8ee0";
+const GIST_ID_DEFAULT = "54001e64dfc9c3fb5bed99e13e23004a";
+const GIST_OWNER = "gabriellerharrison0507";
 let gistId = localStorage.getItem("aptTracker_gistId") || GIST_ID_DEFAULT;
 let gistToken = localStorage.getItem("aptTracker_gistToken") || "";
 
@@ -1355,14 +1356,11 @@ function updateGistUI() {
 async function loadFromGist() {
   if (!gistId) return false;
   try {
-    const headers = { Accept: "application/vnd.github+json" };
-    if (gistToken) headers.Authorization = "token " + gistToken;
-    const res = await fetch("https://api.github.com/gists/" + gistId, { headers });
+    // Use raw URL — works on all devices with no auth required (public gist)
+    const rawUrl = `https://gist.githubusercontent.com/${GIST_OWNER}/${gistId}/raw/${GIST_FILENAME}`;
+    const res = await fetch(rawUrl + "?t=" + Date.now()); // cache bust
     if (!res.ok) return false;
-    const data = await res.json();
-    const file = data.files[GIST_FILENAME];
-    if (!file) return false;
-    const snaps = JSON.parse(file.content);
+    const snaps = await res.json();
     if (Array.isArray(snaps) && snaps.length) {
       unitSnapshots = snaps;
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
