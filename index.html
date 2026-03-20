@@ -719,7 +719,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div id="unit-last-updated" style="font-size:12px;color:var(--muted);"></div>
-      <button onclick="localStorage.removeItem('aptTracker_unitSnapshots');loadUnitData();" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);">↻ Refresh</button>
+      <button onclick="localStorage.removeItem('aptTracker_unitSnapshots');unitSnapshots=[];loadUnitData();" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);">↻ Refresh</button>
     </div>
   </div>
   <div class="dash-grid" id="dash-grid" style="display:none;"></div>
@@ -1312,17 +1312,11 @@ let gistToken = localStorage.getItem("aptTracker_gistToken") || "";
 function updateGistUI() { /* Cloud Sync UI removed — Gist ID is hardcoded */ }
 
 async function loadFromGist() {
-  if (!gistId) return false;
   try {
-    const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
-      headers: { Accept: "application/vnd.github+json" },
-      cache: "no-store"
-    });
+    const rawUrl = `https://gist.githubusercontent.com/${GIST_OWNER}/${GIST_ID_DEFAULT}/raw/${GIST_FILENAME}?t=${Date.now()}`;
+    const res = await fetch(rawUrl, { cache: "no-store" });
     if (!res.ok) return false;
-    const data = await res.json();
-    const file = data.files && data.files[GIST_FILENAME];
-    if (!file || !file.content) return false;
-    const snaps = JSON.parse(file.content);
+    const snaps = await res.json();
     if (Array.isArray(snaps) && snaps.length) {
       unitSnapshots = snaps;
       localStorage.setItem("aptTracker_unitSnapshots", JSON.stringify(unitSnapshots));
