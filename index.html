@@ -530,6 +530,35 @@
   }
   .btn-reset:hover { border-color: #E06B6B; color: #E06B6B; }
 
+  /* SAVINGS */
+  .savings-tab-btn {
+    padding: 8px 16px; border: none; background: none; font-family: var(--sans);
+    font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.12s;
+  }
+  .savings-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .savings-tab-btn:hover:not(.active) { color: var(--ink); }
+  .sav-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin-bottom: 18px; }
+  .sav-card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; font-weight: 600; }
+  .sav-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .sav-row:last-child { border-bottom: none; }
+  .sav-row-label { font-size: 13px; color: var(--muted); }
+  .sav-row-val { font-size: 13px; color: var(--ink); font-weight: 500; }
+  .sav-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .sav-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .sav-stat { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .sav-stat-val { font-family: var(--serif); font-size: 26px; color: var(--ink); line-height: 1; }
+  .sav-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-top: 5px; }
+  .sav-hero { background: var(--accent-light); border: 1px solid var(--accent); border-radius: 16px; padding: 28px; margin-bottom: 22px; }
+  .sav-insight { background: #e8f7f0; border: 1px solid #a3d9b8; border-radius: 8px; padding: 14px 18px; margin-top: 14px; font-size: 13px; color: #1e6b47; line-height: 1.65; }
+  .sav-warning { background: #fff8e8; border: 1px solid #f0d080; border-radius: 8px; padding: 14px 18px; margin-top: 14px; font-size: 13px; color: #7a5a00; line-height: 1.65; }
+  .sav-milestone-bar { height: 7px; border-radius: 4px; background: var(--border); margin: 6px 0 3px; overflow: hidden; }
+  .sav-milestone-fill { height: 100%; border-radius: 4px; }
+  .sav-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 99px; margin-left: 6px; background: var(--accent-light); color: var(--teal-dark); }
+  input[type=range].sav-range { width: 100%; accent-color: var(--accent); margin-top: 8px; }
+  .sav-bar-wrap { display: flex; align-items: flex-end; gap: 3px; height: 100px; }
+  .sav-bar { border-radius: 3px 3px 0 0; flex: 1; min-width: 3px; }
+
   /* MOBILE */
   @media (max-width: 640px) {
     /* Nav — brand + toggle only, hide spending totals */
@@ -580,6 +609,8 @@
     /* Unit table — compact on mobile */
     .unit-table th, .unit-table td { padding: 8px 10px; font-size: 12px; }
     .pref-badge { display: block; margin-left: 0; margin-top: 4px; vertical-align: unset; }
+    .sav-grid2, .sav-grid3 { grid-template-columns: 1fr; }
+    .savings-tab-btn { font-size: 11px; padding: 6px 10px; }
   }
 </style>
 </head>
@@ -590,6 +621,7 @@
   <div style="display:flex;gap:6px;">
     <button class="view-btn active" id="btn-list" onclick="setView('list')">My List</button>
     <button class="view-btn" id="btn-units" onclick="setView('units')">Unit Tracker</button>
+    <button class="view-btn" id="btn-savings" onclick="setView('savings')">Savings</button>
   </div>
   <div class="nav-total">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;">
@@ -740,6 +772,20 @@
 
 
   <div id="unit-import-msg" style="font-size:13px;color:var(--muted);margin-top:8px;display:none;"></div>
+</div>
+
+<div id="savings-section" style="display:none;max-width:960px;margin:0 auto;padding:40px 24px 80px;">
+  <div style="margin-bottom:28px;">
+    <div style="font-family:var(--serif);font-size:2rem;color:var(--ink);line-height:1.1;">Your Path to Move-Out</div>
+    <div id="savings-subhead" style="font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:0.04em;text-transform:uppercase;"></div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:28px;border-bottom:2px solid var(--border);padding-bottom:0;">
+    <button class="savings-tab-btn active" id="stab-overview" onclick="setSavingsTab('overview')">Overview</button>
+    <button class="savings-tab-btn" id="stab-plan" onclick="setSavingsTab('plan')">Savings Plan</button>
+    <button class="savings-tab-btn" id="stab-budget" onclick="setSavingsTab('budget')">Future Budget</button>
+    <button class="savings-tab-btn" id="stab-furnishings" onclick="setSavingsTab('furnishings')">Furnishings</button>
+  </div>
+  <div id="savings-content"></div>
 </div>
 
 <script>
@@ -1239,13 +1285,18 @@ async function loadUnitData() {
 
 function setView(v) {
   const isList = v === "list";
+  const isUnits = v === "units";
+  const isSavings = v === "savings";
   document.getElementById("hero-section").style.display = isList ? "" : "none";
   document.getElementById("room-nav").style.display = isList ? "" : "none";
   document.getElementById("main-list").style.display = isList ? "" : "none";
-  document.getElementById("unit-tracker").style.display = isList ? "none" : "";
+  document.getElementById("unit-tracker").style.display = isUnits ? "" : "none";
+  document.getElementById("savings-section").style.display = isSavings ? "" : "none";
   document.getElementById("btn-list").className = "view-btn" + (isList ? " active" : "");
-  document.getElementById("btn-units").className = "view-btn" + (!isList ? " active" : "");
-  if (!isList) loadUnitData();
+  document.getElementById("btn-units").className = "view-btn" + (isUnits ? " active" : "");
+  document.getElementById("btn-savings").className = "view-btn" + (isSavings ? " active" : "");
+  if (isUnits) loadUnitData();
+  if (isSavings) renderSavings();
 }
 
 
@@ -1711,6 +1762,292 @@ function renderUnitChart() {
       }
     }
   });
+}
+
+
+// ── SAVINGS DASHBOARD ─────────────────────────────────────────
+const SAV_WEEKLY = 1611.55;
+const SAV_MONTHLY_INCOME = SAV_WEEKLY * 52 / 12;
+const SAV_MOVE_OUT = new Date(2026, 5, 1);
+
+const SAV_FURNISHINGS_NEEDED = [
+  { item: "Bed frame + mattress", cost: 700 },
+  { item: "Couch (FB Marketplace)", cost: 500 },
+  { item: "Dresser", cost: 250 },
+  { item: "TV + stand", cost: 450 },
+  { item: "Nightstand", cost: 100 },
+  { item: "Lamps (2–3)", cost: 120 },
+  { item: "Curtains + rods", cost: 150 },
+  { item: "Rug(s)", cost: 200 },
+  { item: "Bathroom essentials", cost: 100 },
+  { item: "Cleaning supplies + misc", cost: 150 },
+  { item: "Bedding + towels", cost: 200 },
+];
+const SAV_FURNISHINGS_OWNED = [
+  { item: "Kitchen items (partial)", cost: 150 },
+  { item: "Barstools (2)", cost: 0 },
+];
+const SAV_FURNISHING_TOTAL = SAV_FURNISHINGS_NEEDED.reduce((s,i) => s+i.cost, 0) + SAV_FURNISHINGS_OWNED.reduce((s,i) => s+i.cost, 0);
+const SAV_MOVE_IN_COSTS = { firstMonth: 1900, securityDeposit: 600 };
+const SAV_MOVE_IN_TOTAL = Object.values(SAV_MOVE_IN_COSTS).reduce((a,b) => a+b, 0);
+const SAV_MOM_EXPENSES = { carInsurance:40, studentLoans:50, subscriptions:60, gym:150, gas:120, eatingOut:500, misc:100 };
+const SAV_APT_EXPENSES_BASE = { rent:1900, groceries:300, carInsurance:40, studentLoans:50, subscriptions:60, gym:150, gas:120, eatingOut:500, petCare:50, miscBuffer:100 };
+const SAV_ESSENTIALS_KEYS = ["rent","groceries","carInsurance","studentLoans","gas"];
+const SAV_APT_LABELS = { rent:"Rent + parking + pet", groceries:"Groceries", carInsurance:"Car insurance", studentLoans:"Student loans", subscriptions:"Subscriptions", gym:"Gym", gas:"Gas", eatingOut:"Eating out + activities", petCare:"Pet supplies", miscBuffer:"Misc buffer" };
+
+let savingsTab = "overview";
+let savMomContrib = 0;
+let savRentChoice = 1900;
+
+function setSavingsTab(t) {
+  savingsTab = t;
+  ["overview","plan","budget","furnishings"].forEach(id => {
+    document.getElementById("stab-"+id).className = "savings-tab-btn" + (t===id?" active":"");
+  });
+  renderSavings();
+}
+
+function fmt$(n) { return n.toLocaleString("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }); }
+
+function renderSavings() {
+  const now = new Date();
+  const monthsLeft = Math.max(1, (SAV_MOVE_OUT.getFullYear()-now.getFullYear())*12 + (SAV_MOVE_OUT.getMonth()-now.getMonth()));
+  document.getElementById("savings-subhead").textContent = `Target Move-Out: June 2026 · ${monthsLeft} month${monthsLeft!==1?"s":""} away`;
+
+  const momTotal = Object.values(SAV_MOM_EXPENSES).reduce((a,b)=>a+b,0) + savMomContrib;
+  const monthlySaved = SAV_MONTHLY_INCOME - momTotal;
+  const projected = monthlySaved * monthsLeft;
+
+  const aptExpenses = { ...SAV_APT_EXPENSES_BASE, rent: savRentChoice };
+  const totalApt = Object.values(aptExpenses).reduce((a,b)=>a+b,0);
+  const essentials = Object.fromEntries(Object.entries(aptExpenses).filter(([k]) => SAV_ESSENTIALS_KEYS.includes(k)));
+  const essentialsTotal = Object.values(essentials).reduce((a,b)=>a+b,0);
+  const emergencyFund = essentialsTotal * 4;
+  const totalGoal = emergencyFund + SAV_FURNISHING_TOTAL + SAV_MOVE_IN_TOTAL;
+  const surplus = projected - totalGoal;
+  const onTrack = surplus >= 0;
+  const monthsNeeded = monthlySaved > 0 ? Math.ceil(totalGoal/monthlySaved) : 999;
+
+  const content = document.getElementById("savings-content");
+
+  if (savingsTab === "overview") {
+    const milestones = [
+      { label:"Move-in Costs", amount:SAV_MOVE_IN_TOTAL, color:"#FF0090" },
+      { label:"Furnishings", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, color:"#0ABAB5" },
+      { label:"4-Month Emergency Fund", amount:totalGoal, color:"#9B84B8" },
+    ];
+    content.innerHTML = `
+      <div class="sav-hero">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+          <div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Projected savings by June</div>
+            <div style="font-family:var(--serif);font-size:2.8rem;color:${onTrack?"#1e6b47":"#7a5a00"};line-height:1;">${fmt$(Math.round(projected))}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">${fmt$(Math.round(monthlySaved))}/mo × ${monthsLeft} months</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Total goal</div>
+            <div style="font-family:var(--serif);font-size:2.8rem;color:var(--ink);line-height:1;">${fmt$(totalGoal)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">move-in + furnishings + 4mo fund</div>
+          </div>
+        </div>
+        ${onTrack
+          ? `<div class="sav-insight">✅ You're on track! By June you'll have <strong>${fmt$(Math.round(projected))}</strong> saved — that's your full goal covered with <strong>${fmt$(Math.round(surplus))} to spare</strong>.</div>`
+          : `<div class="sav-warning">⚠️ At your current rate you'll be <strong>${fmt$(Math.round(Math.abs(surplus)))}</strong> short of your full goal by June. You'd hit it around month ${monthsNeeded}.</div>`
+        }
+      </div>
+
+      <div class="sav-grid3">
+        <div class="sav-stat">
+          <div class="sav-stat-val">${fmt$(Math.round(SAV_MONTHLY_INCOME))}</div>
+          <div class="sav-stat-label">Monthly Take-Home</div>
+        </div>
+        <div class="sav-stat">
+          <div class="sav-stat-val" style="color:#E06B6B;">${fmt$(Math.round(momTotal))}</div>
+          <div class="sav-stat-label">Expenses at Mom's</div>
+        </div>
+        <div class="sav-stat">
+          <div class="sav-stat-val" style="color:#1e6b47;">${fmt$(Math.round(monthlySaved))}</div>
+          <div class="sav-stat-label">Monthly Savings</div>
+        </div>
+      </div>
+
+      <div class="sav-card">
+        <div class="sav-card-title">What you're saving toward</div>
+        ${milestones.map((m,i) => {
+          const prev = i===0 ? 0 : milestones[i-1].amount;
+          const portion = m.amount - prev;
+          const pct = (portion/totalGoal*100).toFixed(0);
+          return `<div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:13px;color:var(--muted);">${m.label}</span>
+              <span style="font-size:13px;color:${m.color};font-weight:500;">${fmt$(portion)} <span style="color:var(--muted);font-weight:400;">(${pct}%)</span></span>
+            </div>
+            <div class="sav-milestone-bar"><div class="sav-milestone-fill" style="width:${pct}%;background:${m.color};"></div></div>
+          </div>`;
+        }).join("")}
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;">Total Goal</span>
+          <span style="font-family:var(--serif);font-size:18px;color:var(--ink);">${fmt$(totalGoal)}</span>
+        </div>
+      </div>
+
+      <div class="sav-card">
+        <div class="sav-card-title">Adjust: Rent payment to mom</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;">
+          <span>$0</span>
+          <span style="color:var(--accent);font-weight:600;">${fmt$(savMomContrib)}/mo to mom</span>
+          <span>$800</span>
+        </div>
+        <input type="range" class="sav-range" min="0" max="800" step="25" value="${savMomContrib}" oninput="savMomContrib=+this.value;renderSavings();" />
+        ${savMomContrib>0 ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Paying mom ${fmt$(savMomContrib)}/mo reduces your June surplus by ${fmt$(savMomContrib*monthsLeft)}.</div>` : ""}
+      </div>
+    `;
+
+  } else if (savingsTab === "plan") {
+    const chartMax = Math.max(totalGoal, projected) * 1.05;
+    content.innerHTML = `
+      <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Month-by-Month to June</div>
+      <div class="sav-card">
+        <div class="sav-card-title">Savings curve vs. goal (each bar = 1 month)</div>
+        <div class="sav-bar-wrap">
+          ${Array.from({length:monthsLeft+1},(_,m) => {
+            const saved = m * monthlySaved;
+            const hPct = Math.min(saved/chartMax,1)*100;
+            const color = saved>=totalGoal ? "#9B84B8" : saved>=(SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved>=SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
+            return `<div class="sav-bar" style="height:${Math.max(hPct,3)}%;background:${color};" title="Month ${m}: ${fmt$(Math.round(saved))}"></div>`;
+          }).join("")}
+        </div>
+        <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">
+          ${[["Move-in ready","#FF0090"],["Furnished","#0ABAB5"],["Full goal","#9B84B8"]].map(([l,c])=>`
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:10px;height:10px;border-radius:2px;background:${c};"></div>
+              <span style="font-size:12px;color:var(--muted);">${l}</span>
+            </div>`).join("")}
+        </div>
+      </div>
+      <div class="sav-grid2">
+        <div class="sav-card">
+          <div class="sav-card-title">Key milestones</div>
+          ${[
+            {label:"Move-in costs", amount:SAV_MOVE_IN_TOTAL, months:Math.ceil(SAV_MOVE_IN_TOTAL/monthlySaved)},
+            {label:"Furnished + moved in", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, months:Math.ceil((SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL)/monthlySaved)},
+            {label:"Full goal", amount:totalGoal, months:monthsNeeded},
+          ].map(m => {
+            const early = m.months <= monthsLeft;
+            return `<div class="sav-row">
+              <span class="sav-row-label">${m.label}</span>
+              <div style="text-align:right;">
+                <div class="sav-row-val" style="color:#FF0090;">${fmt$(m.amount)}</div>
+                <div style="font-size:11px;color:${early?"#1e6b47":"#E06B6B"};">month ${m.months} ${early?"✓ before June":"· after June"}</div>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="sav-card">
+          <div class="sav-card-title">Income snapshot</div>
+          ${[
+            {label:"Weekly paycheck", val:fmt$(SAV_WEEKLY), color:"#1e6b47"},
+            {label:"Monthly income", val:fmt$(Math.round(SAV_MONTHLY_INCOME)), color:"#1e6b47"},
+            {label:"Expenses at mom's", val:fmt$(Math.round(momTotal)), color:"#E06B6B"},
+            {label:"Monthly saved", val:fmt$(Math.round(monthlySaved)), color:"#FF0090"},
+            {label:"Savings rate", val:`${(monthlySaved/SAV_MONTHLY_INCOME*100).toFixed(0)}%`, color:"#FF0090"},
+          ].map(r=>`<div class="sav-row"><span class="sav-row-label">${r.label}</span><span class="sav-row-val" style="color:${r.color};">${r.val}</span></div>`).join("")}
+        </div>
+      </div>
+    `;
+
+  } else if (savingsTab === "budget") {
+    content.innerHTML = `
+      <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Life After Moving Out</div>
+      <div class="sav-card">
+        <div class="sav-card-title">Adjust future rent</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;">
+          <span>$1,800</span>
+          <span style="color:var(--accent);font-weight:600;">${fmt$(savRentChoice)}/mo</span>
+          <span>$2,000</span>
+        </div>
+        <input type="range" class="sav-range" min="1800" max="2000" step="50" value="${savRentChoice}" oninput="savRentChoice=+this.value;renderSavings();" />
+      </div>
+      <div class="sav-grid2">
+        <div class="sav-card">
+          <div class="sav-card-title">Monthly expenses breakdown</div>
+          ${Object.entries(aptExpenses).map(([k,v]) => {
+            const isEss = SAV_ESSENTIALS_KEYS.includes(k);
+            return `<div class="sav-row">
+              <span class="sav-row-label">${SAV_APT_LABELS[k]||k}${isEss?`<span class="sav-badge">essential</span>`:""}</span>
+              <span class="sav-row-val" style="color:#E06B6B;">${fmt$(v)}</span>
+            </div>`;
+          }).join("")}
+          <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--ink);">Total monthly</span>
+            <span style="font-size:15px;font-weight:600;color:#E06B6B;">${fmt$(totalApt)}</span>
+          </div>
+        </div>
+        <div>
+          <div class="sav-card">
+            <div class="sav-card-title">Post-move snapshot</div>
+            ${[
+              {label:"Monthly income", val:fmt$(Math.round(SAV_MONTHLY_INCOME)), color:"#1e6b47"},
+              {label:"Monthly expenses", val:fmt$(totalApt), color:"#E06B6B"},
+              {label:"Monthly surplus", val:fmt$(Math.round(SAV_MONTHLY_INCOME-totalApt)), color:SAV_MONTHLY_INCOME-totalApt>0?"#1e6b47":"#E06B6B"},
+            ].map(r=>`<div class="sav-row"><span class="sav-row-label">${r.label}</span><span class="sav-row-val" style="color:${r.color};">${r.val}</span></div>`).join("")}
+            ${SAV_MONTHLY_INCOME-totalApt>0?`<div class="sav-insight" style="margin-top:12px;">✅ ${fmt$(Math.round(SAV_MONTHLY_INCOME-totalApt))}/mo surplus to keep rebuilding savings after moving out.</div>`:""}
+          </div>
+          <div class="sav-card">
+            <div class="sav-card-title">Emergency fund (4 months, essentials only)</div>
+            ${Object.entries(essentials).map(([k,v])=>`<div class="sav-row"><span class="sav-row-label">${SAV_APT_LABELS[k]||k}</span><span class="sav-row-val">${fmt$(v)}</span></div>`).join("")}
+            <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
+              <span class="sav-row-label" style="color:var(--ink);">Per month</span>
+              <span class="sav-row-val">${fmt$(essentialsTotal)}</span>
+            </div>
+            <div class="sav-row">
+              <span class="sav-row-label" style="color:var(--accent);">× 4 months</span>
+              <span class="sav-row-val" style="color:var(--accent);">${fmt$(emergencyFund)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+  } else if (savingsTab === "furnishings") {
+    content.innerHTML = `
+      <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:6px;">Furnishing Budget</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.7;">Comfortable but budget-conscious. IKEA / Wayfair / FB Marketplace mix. Decor excluded — you've got that covered! 🎉</div>
+      <div class="sav-grid2">
+        <div class="sav-card">
+          <div class="sav-card-title">Items to buy</div>
+          ${SAV_FURNISHINGS_NEEDED.map(i=>`<div class="sav-row"><span class="sav-row-label">${i.item}</span><span class="sav-row-val">${fmt$(i.cost)}</span></div>`).join("")}
+          <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
+            <span style="font-size:13px;font-weight:600;color:var(--ink);">Subtotal</span>
+            <span style="font-size:15px;font-weight:600;color:#FF0090;">${fmt$(SAV_FURNISHINGS_NEEDED.reduce((s,i)=>s+i.cost,0))}</span>
+          </div>
+        </div>
+        <div>
+          <div class="sav-card">
+            <div class="sav-card-title">Already owned / partial</div>
+            ${SAV_FURNISHINGS_OWNED.map(i=>`<div class="sav-row"><span class="sav-row-label">${i.item}</span><span class="sav-row-val" style="color:#1e6b47;">${i.cost===0?"✓ owned":fmt$(i.cost)}</span></div>`).join("")}
+          </div>
+          <div class="sav-card">
+            <div class="sav-card-title">Move-in costs</div>
+            <div class="sav-row"><span class="sav-row-label">First month's rent</span><span class="sav-row-val" style="color:#FF0090;">${fmt$(SAV_MOVE_IN_COSTS.firstMonth)}</span></div>
+            <div class="sav-row"><span class="sav-row-label">Security deposit</span><span class="sav-row-val" style="color:#FF0090;">${fmt$(SAV_MOVE_IN_COSTS.securityDeposit)}</span></div>
+            <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
+              <span style="font-size:13px;font-weight:600;color:var(--ink);">Total</span>
+              <span style="font-size:15px;font-weight:600;color:#FF0090;">${fmt$(SAV_MOVE_IN_TOTAL)}</span>
+            </div>
+          </div>
+          <div class="sav-card" style="background:var(--accent-light);border-color:var(--accent);">
+            <div class="sav-row"><span class="sav-row-label" style="color:var(--teal-dark);">Furnishings</span><span class="sav-row-val" style="color:var(--teal-dark);">${fmt$(SAV_FURNISHING_TOTAL)}</span></div>
+            <div class="sav-row"><span class="sav-row-label" style="color:var(--teal-dark);">Move-in costs</span><span class="sav-row-val" style="color:var(--teal-dark);">${fmt$(SAV_MOVE_IN_TOTAL)}</span></div>
+            <div class="sav-row" style="border-top:2px solid var(--accent);margin-top:4px;">
+              <span style="font-size:13px;font-weight:600;color:var(--ink);">Total to move in furnished</span>
+              <span style="font-family:var(--serif);font-size:18px;color:var(--teal-dark);">${fmt$(SAV_FURNISHING_TOTAL+SAV_MOVE_IN_TOTAL)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 
