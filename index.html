@@ -1908,56 +1908,47 @@ function renderSavings() {
   } else if (savingsTab === "plan") {
     const projected = monthlySaved * monthsNeeded;
     const chartMax = Math.max(totalGoal, projected) * 1.05;
-    content.innerHTML = `
-      <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Month-by-Month to June</div>
-      <div class="sav-card">
-        <div class="sav-card-title">Savings curve vs. goal (each bar = 1 month)</div>
-        <div class="sav-bar-wrap">
-          ${Array.from({length:monthsNeeded+1},(_,m) => {
-            const saved = m * monthlySaved;
-            const hPct = Math.min(saved/chartMax,1)*100;
-            const color = saved>=totalGoal ? "#9B84B8" : saved>=(SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved>=SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
-            return `<div class="sav-bar" style="height:${Math.max(hPct,3)}%;background:${color};" title="Month ${m}: ${fmt$(Math.round(saved))}"></div>`;
-          }).join("")}
-        </div>
-        <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">
-          ${[["Move-in ready","#FF0090"],["Furnished","#0ABAB5"],["Full goal","#9B84B8"]].map(([l,c])=>`
-            <div style="display:flex;align-items:center;gap:6px;">
-              <div style="width:10px;height:10px;border-radius:2px;background:${c};"></div>
-              <span style="font-size:12px;color:var(--muted);">${l}</span>
-            </div>`).join("")}
-        </div>
-      </div>
-      <div class="sav-grid2">
-        <div class="sav-card">
-          <div class="sav-card-title">Key milestones</div>
-          ${[
-            {label:"Move-in costs", amount:SAV_MOVE_IN_TOTAL, months:Math.ceil(SAV_MOVE_IN_TOTAL/monthlySaved)},
-            {label:"Furnished + moved in", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, months:Math.ceil((SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL)/monthlySaved)},
-            {label:"Full goal", amount:totalGoal, months:monthsNeeded},
-          ].map(m => {
-            const early = m.months <= monthsNeeded;
-            return `<div class="sav-row">
-              <span class="sav-row-label">${m.label}</span>
-              <div style="text-align:right;">
-                <div class="sav-row-val" style="color:#FF0090;">${fmt$(m.amount)}</div>
-                <div style="font-size:11px;color:${early?"#1e6b47":"#E06B6B"};">month ${m.months} ${early?"✓ ahead of schedule":"· later"}</div>
-              </div>
-            </div>`;
-          }).join("")}
-        </div>
-        <div class="sav-card">
-          <div class="sav-card-title">Income snapshot</div>
-          ${[
-            {label:"Weekly paycheck", val:fmt$(SAV_WEEKLY), color:"#1e6b47"},
-            {label:"Monthly income", val:fmt$(Math.round(SAV_MONTHLY_INCOME)), color:"#1e6b47"},
-            {label:"Expenses at mom's", val:fmt$(Math.round(momTotal)), color:"#E06B6B"},
-            {label:"Monthly saved", val:fmt$(Math.round(monthlySaved)), color:"#FF0090"},
-            {label:"Savings rate", val:`${(monthlySaved/SAV_MONTHLY_INCOME*100).toFixed(0)}%`, color:"#FF0090"},
-          ].map(r=>`<div class="sav-row"><span class="sav-row-label">${r.label}</span><span class="sav-row-val" style="color:${r.color};">${r.val}</span></div>`).join("")}
-        </div>
-      </div>
-    `;
+
+    let bars = "";
+    for (let m = 0; m <= monthsNeeded; m++) {
+      const saved = m * monthlySaved;
+      const hPct = Math.min(saved / chartMax, 1) * 100;
+      const color = saved >= totalGoal ? "#9B84B8" : saved >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved >= SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
+      bars += '<div class="sav-bar" style="height:' + Math.max(hPct, 3) + '%;background:' + color + ';" title="Month ' + m + ': ' + fmt$(Math.round(saved)) + '"></div>';
+    }
+
+    const milestoneRows = [
+      { label: "Move-in costs", amount: SAV_MOVE_IN_TOTAL, months: Math.ceil(SAV_MOVE_IN_TOTAL / monthlySaved) },
+      { label: "Furnished + moved in", amount: SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL, months: Math.ceil((SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) / monthlySaved) },
+      { label: "Full goal", amount: totalGoal, months: monthsNeeded },
+    ].map(function(m) {
+      const clr = m.months < monthsNeeded ? "#1e6b47" : "#E06B6B";
+      const lbl = m.months < monthsNeeded ? "✓ ahead of schedule" : "· last milestone";
+      return '<div class="sav-row"><span class="sav-row-label">' + m.label + '</span><div style="text-align:right;"><div class="sav-row-val" style="color:#FF0090;">' + fmt$(m.amount) + '</div><div style="font-size:11px;color:' + clr + ';">month ' + m.months + ' ' + lbl + '</div></div></div>';
+    }).join("");
+
+    const incomeRows = [
+      { label: "Weekly paycheck", val: fmt$(SAV_WEEKLY), color: "#1e6b47" },
+      { label: "Monthly income", val: fmt$(Math.round(SAV_MONTHLY_INCOME)), color: "#1e6b47" },
+      { label: "Expenses at mom's", val: fmt$(Math.round(momTotal)), color: "#E06B6B" },
+      { label: "Monthly saved", val: fmt$(Math.round(monthlySaved)), color: "#FF0090" },
+      { label: "Savings rate", val: (monthlySaved / SAV_MONTHLY_INCOME * 100).toFixed(0) + "%", color: "#FF0090" },
+    ].map(function(r) {
+      return '<div class="sav-row"><span class="sav-row-label">' + r.label + '</span><span class="sav-row-val" style="color:' + r.color + ';">' + r.val + '</span></div>';
+    }).join("");
+
+    content.innerHTML = '<div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Month-by-Month Savings</div>'
+      + '<div class="sav-card"><div class="sav-card-title">Savings curve vs. goal (each bar = 1 month)</div>'
+      + '<div class="sav-bar-wrap">' + bars + '</div>'
+      + '<div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">'
+      + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#FF0090;"></div><span style="font-size:12px;color:var(--muted);">Move-in ready</span></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#0ABAB5;"></div><span style="font-size:12px;color:var(--muted);">Furnished</span></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#9B84B8;"></div><span style="font-size:12px;color:var(--muted);">Full goal</span></div>'
+      + '</div></div>'
+      + '<div class="sav-grid2">'
+      + '<div class="sav-card"><div class="sav-card-title">Key milestones</div>' + milestoneRows + '</div>'
+      + '<div class="sav-card"><div class="sav-card-title">Income snapshot</div>' + incomeRows + '</div>'
+      + '</div>';
 
   } else if (savingsTab === "budget") {
     content.innerHTML = `
