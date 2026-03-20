@@ -1821,7 +1821,7 @@ function renderSavings() {
   const totalApt = Object.values(aptExpenses).reduce((a,b)=>a+b,0);
   const essentials = Object.fromEntries(Object.entries(aptExpenses).filter(([k]) => SAV_ESSENTIALS_KEYS.includes(k)));
   const essentialsTotal = Object.values(essentials).reduce((a,b)=>a+b,0);
-  const emergencyFund = essentialsTotal * 4;
+  const emergencyFund = essentialsTotal * 6;
   const totalGoal = emergencyFund + SAV_FURNISHING_TOTAL + SAV_MOVE_IN_TOTAL;
   const surplus = projected - totalGoal;
   const onTrack = surplus >= 0;
@@ -1833,7 +1833,7 @@ function renderSavings() {
     const milestones = [
       { label:"Move-in Costs", amount:SAV_MOVE_IN_TOTAL, color:"#FF0090" },
       { label:"Furnishings", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, color:"#0ABAB5" },
-      { label:"4-Month Emergency Fund", amount:totalGoal, color:"#9B84B8" },
+      { label:"6-Month Emergency Fund", amount:totalGoal, color:"#9B84B8" },
     ];
     content.innerHTML = `
       <div class="sav-hero">
@@ -1846,7 +1846,7 @@ function renderSavings() {
           <div style="text-align:right;">
             <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Total goal</div>
             <div style="font-family:var(--serif);font-size:2.8rem;color:var(--ink);line-height:1;">${fmt$(totalGoal)}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:6px;">move-in + furnishings + 4mo fund</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">move-in + furnishings + 6mo fund</div>
           </div>
         </div>
         ${onTrack
@@ -1993,14 +1993,14 @@ function renderSavings() {
             ${SAV_MONTHLY_INCOME-totalApt>0?`<div class="sav-insight" style="margin-top:12px;">✅ ${fmt$(Math.round(SAV_MONTHLY_INCOME-totalApt))}/mo surplus to keep rebuilding savings after moving out.</div>`:""}
           </div>
           <div class="sav-card">
-            <div class="sav-card-title">Emergency fund (4 months, essentials only)</div>
+            <div class="sav-card-title">Emergency fund (6 months, essentials only)</div>
             ${Object.entries(essentials).map(([k,v])=>`<div class="sav-row"><span class="sav-row-label">${SAV_APT_LABELS[k]||k}</span><span class="sav-row-val">${fmt$(v)}</span></div>`).join("")}
             <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
               <span class="sav-row-label" style="color:var(--ink);">Per month</span>
               <span class="sav-row-val">${fmt$(essentialsTotal)}</span>
             </div>
             <div class="sav-row">
-              <span class="sav-row-label" style="color:var(--accent);">× 4 months</span>
+              <span class="sav-row-label" style="color:var(--accent);">× 6 months</span>
               <span class="sav-row-val" style="color:var(--accent);">${fmt$(emergencyFund)}</span>
             </div>
           </div>
