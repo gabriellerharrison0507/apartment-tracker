@@ -1789,7 +1789,7 @@ const SAV_FURNISHINGS_OWNED = [
 const SAV_FURNISHING_TOTAL = 4808; // midpoint of My List range $2,984.97–$6,631.97
 const SAV_MOVE_IN_COSTS = { firstMonth: 1900, securityDeposit: 600 };
 const SAV_MOVE_IN_TOTAL = Object.values(SAV_MOVE_IN_COSTS).reduce((a,b) => a+b, 0);
-const SAV_MOM_EXPENSES = { carInsurance:40, studentLoans:50, subscriptions:30, gym:100, gas:120, eatingOut:300, misc:160 };
+const SAV_MOM_EXPENSES = { carInsurance:40, studentLoans:50, subscriptions:30, gym:100, gas:120, eatingOut:300, misc:110 };
 const SAV_APT_EXPENSES_BASE = { rent:1900, groceries:300, carInsurance:40, studentLoans:50, subscriptions:60, gym:150, gas:120, eatingOut:500, petCare:50, miscBuffer:100 };
 const SAV_ESSENTIALS_KEYS = ["rent","groceries","carInsurance","studentLoans","gas"];
 const SAV_APT_LABELS = { rent:"Rent + parking + pet", groceries:"Groceries", carInsurance:"Car insurance", studentLoans:"Student loans", subscriptions:"Subscriptions", gym:"Gym", gas:"Gas", eatingOut:"Eating out + activities", petCare:"Pet supplies", miscBuffer:"Misc buffer" };
@@ -1810,12 +1810,9 @@ function fmt$(n) { return n.toLocaleString("en-US", { style:"currency", currency
 
 function renderSavings() {
   const now = new Date();
-  const monthsLeft = Math.max(1, (SAV_MOVE_OUT.getFullYear()-now.getFullYear())*12 + (SAV_MOVE_OUT.getMonth()-now.getMonth()));
-  document.getElementById("savings-subhead").textContent = `Target Move-Out: June 2026 · ${monthsLeft} month${monthsLeft!==1?"s":""} away`;
 
   const momTotal = Object.values(SAV_MOM_EXPENSES).reduce((a,b)=>a+b,0) + savMomContrib;
   const monthlySaved = SAV_MONTHLY_INCOME - momTotal;
-  const projected = monthlySaved * monthsLeft;
 
   const aptExpenses = { ...SAV_APT_EXPENSES_BASE, rent: savRentChoice };
   const totalApt = Object.values(aptExpenses).reduce((a,b)=>a+b,0);
@@ -1823,9 +1820,15 @@ function renderSavings() {
   const essentialsTotal = Object.values(essentials).reduce((a,b)=>a+b,0);
   const emergencyFund = essentialsTotal * 6;
   const totalGoal = emergencyFund + SAV_FURNISHING_TOTAL + SAV_MOVE_IN_TOTAL;
-  const surplus = projected - totalGoal;
-  const onTrack = surplus >= 0;
   const monthsNeeded = monthlySaved > 0 ? Math.ceil(totalGoal/monthlySaved) : 999;
+
+  // Projected move-out date
+  const moveOutDate = new Date(now.getFullYear(), now.getMonth() + monthsNeeded, 1);
+  const moveOutFmt = moveOutDate.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+  const juneTarget = new Date(2026, 5, 1);
+  const beforeJune = moveOutDate <= juneTarget;
+
+  document.getElementById("savings-subhead").textContent = `Saving ${fmt$(Math.round(monthlySaved))}/mo · Goal ${fmt$(totalGoal)}`;
 
   const content = document.getElementById("savings-content");
 
@@ -1839,9 +1842,9 @@ function renderSavings() {
       <div class="sav-hero">
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;">
           <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Projected savings by June</div>
-            <div style="font-family:var(--serif);font-size:2.8rem;color:${onTrack?"#1e6b47":"#7a5a00"};line-height:1;">${fmt$(Math.round(projected))}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:6px;">${fmt$(Math.round(monthlySaved))}/mo × ${monthsLeft} months</div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Projected move-out</div>
+            <div style="font-family:var(--serif);font-size:2.8rem;color:${beforeJune?"#1e6b47":"var(--ink)"};line-height:1;">${moveOutFmt}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">${monthsNeeded} months at ${fmt$(Math.round(monthlySaved))}/mo</div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Total goal</div>
@@ -1849,9 +1852,9 @@ function renderSavings() {
             <div style="font-size:12px;color:var(--muted);margin-top:6px;">move-in + furnishings + 6mo fund</div>
           </div>
         </div>
-        ${onTrack
-          ? `<div class="sav-insight">✅ You're on track! By June you'll have <strong>${fmt$(Math.round(projected))}</strong> saved — that's your full goal covered with <strong>${fmt$(Math.round(surplus))} to spare</strong>.</div>`
-          : `<div class="sav-warning">⚠️ At your current rate you'll be <strong>${fmt$(Math.round(Math.abs(surplus)))}</strong> short of your full goal by June. You'd hit it around month ${monthsNeeded}.</div>`
+        ${beforeJune
+          ? `<div class="sav-insight">✅ You're on track to move out by <strong>${moveOutFmt}</strong> — before your June target! You'll have your full goal of <strong>${fmt$(totalGoal)}</strong> saved.</div>`
+          : `<div class="sav-warning">⚠️ At your current savings rate, you'll be ready to move out in <strong>${moveOutFmt}</strong> — a bit after June. Small cuts to spending could move this date up.</div>`
         }
       </div>
 
@@ -1898,7 +1901,7 @@ function renderSavings() {
           <span>$800</span>
         </div>
         <input type="range" class="sav-range" min="0" max="800" step="25" value="${savMomContrib}" oninput="savMomContrib=+this.value;renderSavings();" />
-        ${savMomContrib>0 ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Paying mom ${fmt$(savMomContrib)}/mo reduces your June surplus by ${fmt$(savMomContrib*monthsLeft)}.</div>` : ""}
+        ${savMomContrib>0 ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Paying mom ${fmt$(savMomContrib)}/mo adds ${Math.ceil(savMomContrib*monthsNeeded/monthlySaved)} month${Math.ceil(savMomContrib*monthsNeeded/monthlySaved)!==1?"s":""} to your timeline.</div>` : ""}
       </div>
     `;
 
@@ -1909,7 +1912,7 @@ function renderSavings() {
       <div class="sav-card">
         <div class="sav-card-title">Savings curve vs. goal (each bar = 1 month)</div>
         <div class="sav-bar-wrap">
-          ${Array.from({length:monthsLeft+1},(_,m) => {
+          ${Array.from({length:monthsNeeded+1},(_,m) => {
             const saved = m * monthlySaved;
             const hPct = Math.min(saved/chartMax,1)*100;
             const color = saved>=totalGoal ? "#9B84B8" : saved>=(SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved>=SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
@@ -1932,12 +1935,12 @@ function renderSavings() {
             {label:"Furnished + moved in", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, months:Math.ceil((SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL)/monthlySaved)},
             {label:"Full goal", amount:totalGoal, months:monthsNeeded},
           ].map(m => {
-            const early = m.months <= monthsLeft;
+            const early = m.months <= monthsNeeded;
             return `<div class="sav-row">
               <span class="sav-row-label">${m.label}</span>
               <div style="text-align:right;">
                 <div class="sav-row-val" style="color:#FF0090;">${fmt$(m.amount)}</div>
-                <div style="font-size:11px;color:${early?"#1e6b47":"#E06B6B"};">month ${m.months} ${early?"✓ before June":"· after June"}</div>
+                <div style="font-size:11px;color:${early?"#1e6b47":"#E06B6B"};">month ${m.months} ${early?"✓ ahead of schedule":"· later"}</div>
               </div>
             </div>`;
           }).join("")}
