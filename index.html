@@ -1789,7 +1789,7 @@ const SAV_FURNISHINGS_OWNED = [
 const SAV_FURNISHING_TOTAL = SAV_FURNISHINGS_NEEDED.reduce((s,i) => s+i.cost, 0) + SAV_FURNISHINGS_OWNED.reduce((s,i) => s+i.cost, 0);
 const SAV_MOVE_IN_COSTS = { firstMonth: 1900, securityDeposit: 600 };
 const SAV_MOVE_IN_TOTAL = Object.values(SAV_MOVE_IN_COSTS).reduce((a,b) => a+b, 0);
-const SAV_MOM_EXPENSES = { carInsurance:40, studentLoans:50, subscriptions:60, gym:150, gas:120, eatingOut:500, misc:100 };
+const SAV_MOM_EXPENSES = { carInsurance:40, studentLoans:50, subscriptions:30, gym:100, gas:120, eatingOut:300, misc:100 };
 const SAV_APT_EXPENSES_BASE = { rent:1900, groceries:300, carInsurance:40, studentLoans:50, subscriptions:60, gym:150, gas:120, eatingOut:500, petCare:50, miscBuffer:100 };
 const SAV_ESSENTIALS_KEYS = ["rent","groceries","carInsurance","studentLoans","gas"];
 const SAV_APT_LABELS = { rent:"Rent + parking + pet", groceries:"Groceries", carInsurance:"Car insurance", studentLoans:"Student loans", subscriptions:"Subscriptions", gym:"Gym", gas:"Gas", eatingOut:"Eating out + activities", petCare:"Pet supplies", miscBuffer:"Misc buffer" };
