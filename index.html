@@ -783,7 +783,6 @@
     <button class="savings-tab-btn active" id="stab-overview" onclick="setSavingsTab('overview')">Overview</button>
     <button class="savings-tab-btn" id="stab-plan" onclick="setSavingsTab('plan')">Savings Plan</button>
     <button class="savings-tab-btn" id="stab-budget" onclick="setSavingsTab('budget')">Future Budget</button>
-    <button class="savings-tab-btn" id="stab-furnishings" onclick="setSavingsTab('furnishings')">Furnishings</button>
   </div>
   <div id="savings-content"></div>
 </div>
@@ -1801,7 +1800,7 @@ let savRentChoice = 1900;
 
 function setSavingsTab(t) {
   savingsTab = t;
-  ["overview","plan","budget","furnishings"].forEach(id => {
+  ["overview","plan","budget"].forEach(id => {
     document.getElementById("stab-"+id).className = "savings-tab-btn" + (t===id?" active":"");
   });
   renderSavings();
@@ -2009,44 +2008,6 @@ function renderSavings() {
       </div>
     `;
 
-  } else if (savingsTab === "furnishings") {
-    content.innerHTML = `
-      <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:6px;">Furnishing Budget</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.7;">Comfortable but budget-conscious. IKEA / Wayfair / FB Marketplace mix. Decor excluded — you've got that covered! 🎉</div>
-      <div class="sav-grid2">
-        <div class="sav-card">
-          <div class="sav-card-title">Items to buy</div>
-          ${SAV_FURNISHINGS_NEEDED.map(i=>`<div class="sav-row"><span class="sav-row-label">${i.item}</span><span class="sav-row-val">${fmt$(i.cost)}</span></div>`).join("")}
-          <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
-            <span style="font-size:13px;font-weight:600;color:var(--ink);">Subtotal</span>
-            <span style="font-size:15px;font-weight:600;color:#FF0090;">${fmt$(SAV_FURNISHINGS_NEEDED.reduce((s,i)=>s+i.cost,0))}</span>
-          </div>
-        </div>
-        <div>
-          <div class="sav-card">
-            <div class="sav-card-title">Already owned / partial</div>
-            ${SAV_FURNISHINGS_OWNED.map(i=>`<div class="sav-row"><span class="sav-row-label">${i.item}</span><span class="sav-row-val" style="color:#1e6b47;">${i.cost===0?"✓ owned":fmt$(i.cost)}</span></div>`).join("")}
-          </div>
-          <div class="sav-card">
-            <div class="sav-card-title">Move-in costs</div>
-            <div class="sav-row"><span class="sav-row-label">First month's rent</span><span class="sav-row-val" style="color:#FF0090;">${fmt$(SAV_MOVE_IN_COSTS.firstMonth)}</span></div>
-            <div class="sav-row"><span class="sav-row-label">Security deposit</span><span class="sav-row-val" style="color:#FF0090;">${fmt$(SAV_MOVE_IN_COSTS.securityDeposit)}</span></div>
-            <div class="sav-row" style="border-top:2px solid var(--border);margin-top:4px;">
-              <span style="font-size:13px;font-weight:600;color:var(--ink);">Total</span>
-              <span style="font-size:15px;font-weight:600;color:#FF0090;">${fmt$(SAV_MOVE_IN_TOTAL)}</span>
-            </div>
-          </div>
-          <div class="sav-card" style="background:var(--accent-light);border-color:var(--accent);">
-            <div class="sav-row"><span class="sav-row-label" style="color:var(--teal-dark);">Furnishings</span><span class="sav-row-val" style="color:var(--teal-dark);">${fmt$(SAV_FURNISHING_TOTAL)}</span></div>
-            <div class="sav-row"><span class="sav-row-label" style="color:var(--teal-dark);">Move-in costs</span><span class="sav-row-val" style="color:var(--teal-dark);">${fmt$(SAV_MOVE_IN_TOTAL)}</span></div>
-            <div class="sav-row" style="border-top:2px solid var(--accent);margin-top:4px;">
-              <span style="font-size:13px;font-weight:600;color:var(--ink);">Total to move in furnished</span>
-              <span style="font-family:var(--serif);font-size:18px;color:var(--teal-dark);">${fmt$(SAV_FURNISHING_TOTAL+SAV_MOVE_IN_TOTAL)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
   }
 }
 
