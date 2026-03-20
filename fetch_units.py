@@ -108,6 +108,8 @@ def main():
     os.makedirs("data", exist_ok=True)
     cfg = load_config()
     token = os.environ.get("GIST_TOKEN") or cfg.get("gist_token", "")
+    if os.environ.get("GIST_ID"):
+        cfg["gist_id"] = os.environ.get("GIST_ID")
 
     snapshots = []
     if os.path.exists(SNAPSHOTS_FILE):
