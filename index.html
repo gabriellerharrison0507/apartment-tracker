@@ -1906,6 +1906,7 @@ function renderSavings() {
     `;
 
   } else if (savingsTab === "plan") {
+    const projected = monthlySaved * monthsNeeded;
     const chartMax = Math.max(totalGoal, projected) * 1.05;
     content.innerHTML = `
       <div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Month-by-Month to June</div>
