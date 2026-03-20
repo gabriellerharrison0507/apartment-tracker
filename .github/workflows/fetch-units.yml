@@ -32,6 +32,8 @@ jobs:
 
       - name: Fetch unit prices
         run: python fetch_units.py
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
 
       - name: Commit and push
         run: |

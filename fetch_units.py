@@ -107,7 +107,7 @@ def fetch_units():
 def main():
     os.makedirs("data", exist_ok=True)
     cfg = load_config()
-    token = cfg.get("gist_token", "")
+    token = os.environ.get("GIST_TOKEN") or cfg.get("gist_token", "")
 
     snapshots = []
     if os.path.exists(SNAPSHOTS_FILE):
