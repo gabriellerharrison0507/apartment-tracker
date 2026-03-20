@@ -2,7 +2,7 @@ name: Fetch Lyra Unit Prices
 
 on:
   schedule:
-    - cron: '0 15 * * *'  # 9am MDT (UTC-6) daily
+    - cron: '0 14 * * *'  # 8am MDT (UTC-6) daily
   workflow_dispatch:       # Allow manual trigger from GitHub Actions tab
 
 permissions:
