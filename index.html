@@ -1311,8 +1311,9 @@ function updateGistUI() { /* Cloud Sync UI removed — Gist ID is hardcoded */ }
 async function loadFromGist() {
   if (!gistId) return false;
   try {
-    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-      headers: { Accept: "application/vnd.github+json" }
+    const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
+      headers: { Accept: "application/vnd.github+json" },
+      cache: "no-store"
     });
     if (!res.ok) return false;
     const data = await res.json();
