@@ -717,7 +717,10 @@
       <h2 class="room-title">Unit Tracker</h2>
       <div class="room-meta">1BR pricing &amp; availability at Lyra — updated daily at 8am</div>
     </div>
-    <div id="unit-last-updated" style="font-size:12px;color:var(--muted);"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="unit-last-updated" style="font-size:12px;color:var(--muted);"></div>
+      <button onclick="localStorage.removeItem('aptTracker_unitSnapshots');loadUnitData();" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);">↻ Refresh</button>
+    </div>
   </div>
   <div class="dash-grid" id="dash-grid" style="display:none;"></div>
 
