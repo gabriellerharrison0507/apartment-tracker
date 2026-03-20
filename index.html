@@ -556,7 +556,7 @@
   .sav-milestone-fill { height: 100%; border-radius: 4px; }
   .sav-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 99px; margin-left: 6px; background: var(--accent-light); color: var(--teal-dark); }
   input[type=range].sav-range { width: 100%; accent-color: var(--accent); margin-top: 8px; }
-  .sav-bar-wrap { display: flex; align-items: flex-end; gap: 3px; height: 100px; }
+  .sav-bar-wrap { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
   .sav-bar { border-radius: 3px 3px 0 0; flex: 1; min-width: 3px; }
 
   /* MOBILE */
@@ -1909,12 +1909,13 @@ function renderSavings() {
     const projected = monthlySaved * monthsNeeded;
     const chartMax = Math.max(totalGoal, projected) * 1.05;
 
+    const barWrapHeight = 120;
     let bars = "";
     for (let m = 0; m <= monthsNeeded; m++) {
       const saved = m * monthlySaved;
-      const hPct = Math.min(saved / chartMax, 1) * 100;
+      const hPx = Math.max(Math.min(saved / chartMax, 1) * barWrapHeight, 3);
       const color = saved >= totalGoal ? "#9B84B8" : saved >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved >= SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
-      bars += '<div class="sav-bar" style="height:' + Math.max(hPct, 3) + '%;background:' + color + ';" title="Month ' + m + ': ' + fmt$(Math.round(saved)) + '"></div>';
+      bars += '<div class="sav-bar" style="height:' + hPx.toFixed(1) + 'px;background:' + color + ';" title="Month ' + m + ': ' + fmt$(Math.round(saved)) + '"></div>';
     }
 
     const milestoneRows = [
