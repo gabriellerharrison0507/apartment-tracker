@@ -1559,6 +1559,7 @@ function renderUnitTable() {
     if (r.prevRent != null) {
       if (r.minRent < r.prevRent) { cls = "price-down"; change = `<span style="font-size:11px;"> ↓$${(r.prevRent - r.minRent).toLocaleString()}</span>`; }
       else if (r.minRent > r.prevRent) { cls = "price-up"; change = `<span style="font-size:11px;"> ↑$${(r.minRent - r.prevRent).toLocaleString()}</span>`; }
+      else { change = `<span style="font-size:11px;color:var(--muted);"> –</span>`; }
     }
     const isWatched = watchedUnits[r.code] !== undefined;
     const watchedPrice = watchedUnits[r.code];
