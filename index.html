@@ -724,6 +724,17 @@
   </div>
   <div class="dash-grid" id="dash-grid" style="display:none;"></div>
 
+  <div id="unit-insights" style="display:none;margin:24px 0;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);">
+        <div style="font-family:var(--serif);font-size:18px;color:var(--ink);">Insights</div>
+        <div id="unit-insights-updated" style="font-size:11px;color:var(--muted);"></div>
+      </div>
+      <div id="unit-insights-ai" style="display:none;padding:14px 20px;border-bottom:1px solid var(--border);font-size:13px;line-height:1.7;color:var(--ink);white-space:pre-wrap;"></div>
+      <div id="unit-insights-js" style="padding:12px 20px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
   <div class="unit-filter-bar" id="unit-filters" style="display:none;">
     <div>
       <div class="detail-label" style="margin-bottom:4px;">Plan Type</div>
@@ -1319,6 +1330,7 @@ async function loadUnitData() {
     // Have local data — show it immediately, refresh from Gist quietly
     if (unitSnapshots.length) el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
     renderUnitTable();
+    loadAIInsights();
     const updated = await loadFromGist();
     if (updated) { el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date; renderUnitTable(); }
   } else {
@@ -1327,6 +1339,7 @@ async function loadUnitData() {
     const updated = await loadFromGist();
     if (unitSnapshots.length) el.textContent = "Last snapshot: " + unitSnapshots[unitSnapshots.length - 1].date;
     renderUnitTable();
+    loadAIInsights();
   }
 }
 
@@ -1650,6 +1663,140 @@ function renderUnitTable() {
   renderAllCharts();
 }
 
+// ── INSIGHTS ──────────────────────────────────────────────────
+
+const GIST_INSIGHTS_FILENAME = "lyra-insights.json";
+
+async function loadAIInsights() {
+  const el = document.getElementById("unit-insights-ai");
+  const upd = document.getElementById("unit-insights-updated");
+  if (!el) return;
+  try {
+    const url = "https://gist.githubusercontent.com/" + GIST_OWNER + "/" + GIST_ID_DEFAULT + "/raw/" + GIST_INSIGHTS_FILENAME + "?t=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.summary) {
+      el.textContent = data.summary;
+      el.style.display = "";
+      if (data.generated_at && upd) upd.textContent = "AI updated " + data.generated_at;
+    }
+  } catch (e) { /* no AI summary yet — silently skip */ }
+}
+
+function renderInsights() {
+  const section = document.getElementById("unit-insights");
+  const container = document.getElementById("unit-insights-js");
+  if (!section || !container || unitSnapshots.length < 3) { if (section) section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const insights = [];
+
+  const latest = unitSnapshots[unitSnapshots.length - 1];
+  const latestPrices = Object.values(latest.units).map(u => u.minRent);
+  const latestAvg = Math.round(latestPrices.reduce((a, b) => a + b, 0) / latestPrices.length);
+  const latestMin = Math.min.apply(null, latestPrices);
+
+  // 1. 7-day price trend
+  if (unitSnapshots.length >= 8) {
+    const week = unitSnapshots.slice(-7);
+    const prior = unitSnapshots.slice(-14, -7);
+    const avgWeek = Math.round(week.reduce((s, snap) => {
+      const rents = Object.values(snap.units).map(u => u.minRent);
+      return s + rents.reduce((a, b) => a + b, 0) / rents.length;
+    }, 0) / week.length);
+    const avgPrior = Math.round(prior.reduce((s, snap) => {
+      const rents = Object.values(snap.units).map(u => u.minRent);
+      return s + rents.reduce((a, b) => a + b, 0) / rents.length;
+    }, 0) / Math.max(prior.length, 1));
+    const diff = avgWeek - avgPrior;
+    if (prior.length >= 3) {
+      if (diff > 10) insights.push({ icon: "↑", color: "#c0302a", bg: "#fde8e8", text: "Avg price up $" + diff + " vs last week ($" + avgPrior.toLocaleString() + " → $" + avgWeek.toLocaleString() + ") — spring leasing season may be pushing prices up." });
+      else if (diff < -10) insights.push({ icon: "↓", color: "#2a9d6a", bg: "#e8f8f1", text: "Avg price down $" + Math.abs(diff) + " vs last week ($" + avgPrior.toLocaleString() + " → $" + avgWeek.toLocaleString() + ") — good window to lock in." });
+      else insights.push({ icon: "→", color: "#888", bg: "#f5f5f5", text: "Prices flat week-over-week (avg $" + avgWeek.toLocaleString() + "). No major movement." });
+    }
+  }
+
+  // 2. Inventory trend (last 7 days)
+  if (unitSnapshots.length >= 7) {
+    const recent = unitSnapshots.slice(-7).map(s => Object.keys(s.units).length);
+    const older = unitSnapshots.slice(-14, -7).map(s => Object.keys(s.units).length);
+    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const olderAvg = older.length ? older.reduce((a, b) => a + b, 0) / older.length : recentAvg;
+    const diff = recentAvg - olderAvg;
+    if (diff >= 1) insights.push({ icon: "📈", color: "#2a7a9d", bg: "#e8f4f8", text: "Inventory growing — " + Math.round(recentAvg * 10) / 10 + " units avg this week vs " + Math.round(olderAvg * 10) / 10 + " last week. More competition among landlords often means slightly lower prices." });
+    else if (diff <= -1) insights.push({ icon: "📉", color: "#c07a2a", bg: "#fdf3e8", text: "Inventory shrinking — " + Math.round(recentAvg * 10) / 10 + " units avg this week vs " + Math.round(olderAvg * 10) / 10 + " last week. Tighter supply." });
+  }
+
+  // 3. Historical low check
+  const allMins = unitSnapshots.map(s => Math.min.apply(null, Object.values(s.units).map(u => u.minRent)));
+  const historicalLow = Math.min.apply(null, allMins);
+  if (latestMin <= historicalLow + 15) {
+    insights.push({ icon: "🔥", color: "#c0306a", bg: "#fde8f0", text: "Today's cheapest unit ($" + latestMin.toLocaleString() + ") is at or near the historical low ($" + historicalLow.toLocaleString() + ") — best pricing seen so far." });
+  }
+
+  // 4. A7 #338 specific
+  const a7Snaps = unitSnapshots.filter(s => s.units["338"]);
+  if (a7Snaps.length >= 2) {
+    const daysListed = a7Snaps.length;
+    const firstPrice = a7Snaps[0].units["338"].minRent;
+    const currentPrice = a7Snaps[a7Snaps.length - 1].units["338"].minRent;
+    const priceDiff = currentPrice - firstPrice;
+    const recentA7 = a7Snaps.slice(-7).map(s => s.units["338"].minRent);
+    const a7Low = Math.min.apply(null, a7Snaps.map(s => s.units["338"].minRent));
+    if (currentPrice <= a7Low + 10) {
+      insights.push({ icon: "✦", color: "#c0306a", bg: "#fde8f0", text: "A7 #338 is at its lowest recorded price ($" + currentPrice.toLocaleString() + ") — " + daysListed + " days listed. Best time to move on it if you're ready." });
+    } else if (priceDiff < -20) {
+      insights.push({ icon: "✦", color: "#2a9d6a", bg: "#e8f8f1", text: "A7 #338 has dropped $" + Math.abs(priceDiff) + " since it first appeared (" + daysListed + " days listed). Currently $" + currentPrice.toLocaleString() + "." });
+    } else {
+      insights.push({ icon: "✦", color: "#888", bg: "#f5f5f5", text: "A7 #338: listed " + daysListed + " days, currently $" + currentPrice.toLocaleString() + (priceDiff !== 0 ? " (" + (priceDiff > 0 ? "+" : "") + "$" + priceDiff + " since first seen)" : ", no change since first seen") + "." });
+    }
+  }
+
+  // 5. Supply-price correlation
+  if (unitSnapshots.length >= 14) {
+    const counts = unitSnapshots.map(s => Object.keys(s.units).length);
+    const avgs = unitSnapshots.map(s => { const r = Object.values(s.units).map(u => u.minRent); return r.reduce((a, b) => a + b, 0) / r.length; });
+    const n = counts.length;
+    const mc = counts.reduce((a, b) => a + b, 0) / n;
+    const mp = avgs.reduce((a, b) => a + b, 0) / n;
+    const cov = counts.reduce((s, c, i) => s + (c - mc) * (avgs[i] - mp), 0) / n;
+    const sc = Math.sqrt(counts.reduce((s, c) => s + (c - mc) ** 2, 0) / n);
+    const sp = Math.sqrt(avgs.reduce((s, p) => s + (p - mp) ** 2, 0) / n);
+    const corr = sc && sp ? cov / (sc * sp) : 0;
+    if (corr < -0.4) insights.push({ icon: "🔗", color: "#2a7a9d", bg: "#e8f4f8", text: "Supply & price are inversely correlated (" + corr.toFixed(2) + ") — when more units are available, prices tend to dip. Watch for weeks with 7+ listings." });
+    else if (corr > 0.4) insights.push({ icon: "🔗", color: "#c07a2a", bg: "#fdf3e8", text: "Supply & price moving together (" + corr.toFixed(2) + ") — more units listed alongside higher prices, suggesting demand is high." });
+  }
+
+  // 6. Best day of week
+  if (unitSnapshots.length >= 14) {
+    const priceByDay = [[], [], [], [], [], [], []];
+    const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    unitSnapshots.forEach(s => {
+      const dow = new Date(s.date).getDay();
+      const rents = Object.values(s.units).map(u => u.minRent);
+      if (rents.length) priceByDay[dow].push(rents.reduce((a, b) => a + b, 0) / rents.length);
+    });
+    const dayAvgs = priceByDay.map(arr => arr.length >= 2 ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+    const validDays = dayAvgs.map((v, i) => ({ day: days[i], avg: v, i })).filter(d => d.avg != null);
+    if (validDays.length >= 4) {
+      const best = validDays.reduce((a, b) => b.avg < a.avg ? b : a);
+      const worst = validDays.reduce((a, b) => b.avg > a.avg ? b : a);
+      const spread = Math.round(worst.avg - best.avg);
+      if (spread >= 20) insights.push({ icon: "📅", color: "#7a5a9d", bg: "#f0ebf8", text: spread + " avg price spread across days of the week. " + best.day + "s tend to be cheapest, " + worst.day + "s most expensive. Worth checking mid-week." });
+    }
+  }
+
+  if (!insights.length) { section.style.display = "none"; return; }
+
+  container.innerHTML = insights.map(ins =>
+    '<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);last-child:border:none;">' +
+      '<span style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:' + ins.bg + ';color:' + ins.color + ';display:flex;align-items:center;justify-content:center;font-size:13px;margin-top:1px;">' + ins.icon + '</span>' +
+      '<span style="font-size:13px;color:var(--ink);line-height:1.6;">' + ins.text + '</span>' +
+    '</div>'
+  ).join("");
+}
+
 // ── CHART HELPERS ─────────────────────────────────────────────
 
 // Auto-scale: show weekly snapshots once ≥30 days of data, daily otherwise.
@@ -1691,6 +1838,7 @@ function setChartMode(mode) {
 }
 
 function renderAllCharts() {
+  renderInsights();
   renderUnitChart();
   renderInventoryChart();
   renderMinPriceChart();
