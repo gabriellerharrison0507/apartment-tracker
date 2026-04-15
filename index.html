@@ -772,15 +772,29 @@
         <button id="chart-btn-avg" class="filter-btn" onclick="setChartMode('avg')">Avg by Plan</button>
       </div>
     </div>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div class="chart-wrap-tall"><canvas id="unit-chart"></canvas></div>
+    <div id="unit-chart-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="unit-chart-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap-tall"><canvas id="unit-chart"></canvas></div>
+      </div>
+      <div id="unit-chart-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap-tall"><canvas id="unit-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 
   <div id="unit-inventory-section" style="display:none;margin-top:32px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div class="chart-wrap"><canvas id="unit-inventory-chart"></canvas></div>
+    <div id="unit-inventory-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="unit-inventory-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="unit-inventory-chart"></canvas></div>
+      </div>
+      <div id="unit-inventory-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="unit-inventory-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -1821,8 +1835,10 @@ const PLAN_COLORS = ['#FF0090','#0CE6DF','#9B84B8','#7A9E7E','#F4A0BF','#5B9EC9'
 const CHART_FONT = { family: "DM Sans, system-ui, sans-serif" };
 
 let unitChartInstance = null;
+let unitChartRecentInstance = null;
 let unitChartMode = "min";
 let inventoryChartInstance = null;
+let inventoryChartRecentInstance = null;
 let minPriceChartInstance = null;
 let supplyPriceChartInstance = null;
 let dowInvChartInstance = null;
@@ -1848,15 +1864,8 @@ function renderAllCharts() {
   renderA7Chart();
 }
 
-function renderInventoryChart() {
-  const section = document.getElementById("unit-inventory-section");
-  if (!section) return;
-  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
-  section.style.display = "";
-
-  const snaps = getScaledSnapshots();
-  if (inventoryChartInstance) inventoryChartInstance.destroy();
-  inventoryChartInstance = new Chart(document.getElementById("unit-inventory-chart").getContext("2d"), {
+function makeInventoryChartConfig(snaps) {
+  return {
     type: "line",
     data: {
       labels: snaps.map(s => s.date),
@@ -1865,11 +1874,7 @@ function renderInventoryChart() {
         data: snaps.map(s => Object.keys(s.units).length),
         borderColor: "#0ABAB5",
         backgroundColor: "#0ABAB522",
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        borderWidth: 2,
+        fill: true, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
       }]
     },
     options: {
@@ -1883,22 +1888,14 @@ function renderInventoryChart() {
         y: { beginAtZero: false, afterFit(s) { s.width = 40; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, stepSize: 1, maxTicksLimit: 6 } }
       }
     }
-  });
+  };
 }
 
-function renderUnitChart() {
-  const section = document.getElementById("unit-chart-section");
-  if (!section) return;
-  if (unitSnapshots.length < 1) { section.style.display = "none"; return; }
-  section.style.display = "";
-
-  const snaps = getScaledSnapshots();
-  let datasets;
-
+function buildUnitDatasets(snaps) {
   if (unitChartMode === "min") {
     const allCodes = [...new Set(unitSnapshots.flatMap(s => Object.keys(s.units)))]
       .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-    datasets = allCodes.map((code, i) => {
+    return allCodes.map((code, i) => {
       const plan = unitSnapshots.flatMap(s => s.units[code] ? [s.units[code].plan] : [])[0] || code;
       return {
         label: "#" + code + " (" + plan + ")",
@@ -1911,7 +1908,7 @@ function renderUnitChart() {
   } else {
     const allPlans = [...new Set(unitSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))]
       .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-    datasets = allPlans.map((plan, i) => ({
+    return allPlans.map((plan, i) => ({
       label: plan,
       data: snaps.map(s => {
         const rents = Object.values(s.units).filter(u => u.plan === plan).map(u => u.minRent);
@@ -1922,11 +1919,12 @@ function renderUnitChart() {
       tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6,
     }));
   }
+}
 
-  if (unitChartInstance) unitChartInstance.destroy();
-  unitChartInstance = new Chart(document.getElementById("unit-chart").getContext("2d"), {
+function makeUnitChartConfig(snaps) {
+  return {
     type: "line",
-    data: { labels: snaps.map(s => s.date), datasets },
+    data: { labels: snaps.map(s => s.date), datasets: buildUnitDatasets(snaps) },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
@@ -1939,7 +1937,69 @@ function renderUnitChart() {
         y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } }
       }
     }
-  });
+  };
+}
+
+function renderInventoryChart() {
+  const section = document.getElementById("unit-inventory-section");
+  if (!section) return;
+  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const showSplit = unitSnapshots.length >= 15;
+  const grid = document.getElementById("unit-inventory-grid");
+  const recentWrap = document.getElementById("unit-inventory-recent-wrap");
+  const fullLabel = document.getElementById("unit-inventory-full-label");
+  if (showSplit) {
+    grid.style.gridTemplateColumns = "1fr 1fr";
+    recentWrap.style.display = "";
+    fullLabel.textContent = unitSnapshots.length >= 30 ? "Full Timeline (weekly)" : "Full Timeline";
+  } else {
+    grid.style.gridTemplateColumns = "1fr";
+    recentWrap.style.display = "none";
+    fullLabel.textContent = "Full Timeline";
+  }
+
+  if (inventoryChartInstance) inventoryChartInstance.destroy();
+  inventoryChartInstance = new Chart(document.getElementById("unit-inventory-chart").getContext("2d"), makeInventoryChartConfig(getScaledSnapshots()));
+
+  if (showSplit) {
+    if (inventoryChartRecentInstance) inventoryChartRecentInstance.destroy();
+    inventoryChartRecentInstance = new Chart(document.getElementById("unit-inventory-chart-recent").getContext("2d"), makeInventoryChartConfig(unitSnapshots.slice(-10)));
+  } else {
+    if (inventoryChartRecentInstance) { inventoryChartRecentInstance.destroy(); inventoryChartRecentInstance = null; }
+  }
+}
+
+function renderUnitChart() {
+  const section = document.getElementById("unit-chart-section");
+  if (!section) return;
+  if (unitSnapshots.length < 1) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const showSplit = unitSnapshots.length >= 15;
+  const grid = document.getElementById("unit-chart-grid");
+  const recentWrap = document.getElementById("unit-chart-recent-wrap");
+  const fullLabel = document.getElementById("unit-chart-full-label");
+  if (showSplit) {
+    grid.style.gridTemplateColumns = "1fr 1fr";
+    recentWrap.style.display = "";
+    fullLabel.textContent = unitSnapshots.length >= 30 ? "Full Timeline (weekly)" : "Full Timeline";
+  } else {
+    grid.style.gridTemplateColumns = "1fr";
+    recentWrap.style.display = "none";
+    fullLabel.textContent = "Full Timeline";
+  }
+
+  if (unitChartInstance) unitChartInstance.destroy();
+  unitChartInstance = new Chart(document.getElementById("unit-chart").getContext("2d"), makeUnitChartConfig(getScaledSnapshots()));
+
+  if (showSplit) {
+    if (unitChartRecentInstance) unitChartRecentInstance.destroy();
+    unitChartRecentInstance = new Chart(document.getElementById("unit-chart-recent").getContext("2d"), makeUnitChartConfig(unitSnapshots.slice(-10)));
+  } else {
+    if (unitChartRecentInstance) { unitChartRecentInstance.destroy(); unitChartRecentInstance = null; }
+  }
 }
 
 function renderMinPriceChart() {
