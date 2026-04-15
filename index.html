@@ -1951,7 +1951,7 @@ function renderInventoryChart() {
   const recentWrap = document.getElementById("unit-inventory-recent-wrap");
   const fullLabel = document.getElementById("unit-inventory-full-label");
   if (showSplit) {
-    grid.style.gridTemplateColumns = "1fr 1fr";
+    grid.style.gridTemplateColumns = "1fr";
     recentWrap.style.display = "";
     fullLabel.textContent = unitSnapshots.length >= 30 ? "Full Timeline (weekly)" : "Full Timeline";
   } else {
@@ -1982,7 +1982,7 @@ function renderUnitChart() {
   const recentWrap = document.getElementById("unit-chart-recent-wrap");
   const fullLabel = document.getElementById("unit-chart-full-label");
   if (showSplit) {
-    grid.style.gridTemplateColumns = "1fr 1fr";
+    grid.style.gridTemplateColumns = "1fr";
     recentWrap.style.display = "";
     fullLabel.textContent = unitSnapshots.length >= 30 ? "Full Timeline (weekly)" : "Full Timeline";
   } else {
