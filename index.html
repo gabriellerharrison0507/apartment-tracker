@@ -800,16 +800,30 @@
 
   <div id="unit-minprice-section" style="display:none;margin-top:32px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Cheapest Unit Over Time</h3>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div class="chart-wrap"><canvas id="unit-minprice-chart"></canvas></div>
+    <div id="unit-minprice-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="unit-minprice-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="unit-minprice-chart"></canvas></div>
+      </div>
+      <div id="unit-minprice-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="unit-minprice-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 
   <div id="unit-supply-price-section" style="display:none;margin-top:32px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Supply vs. Avg Price</h3>
     <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Do prices rise when fewer units are available?</div>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div class="chart-wrap"><canvas id="unit-supply-price-chart"></canvas></div>
+    <div id="unit-supply-price-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="unit-supply-price-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="unit-supply-price-chart"></canvas></div>
+      </div>
+      <div id="unit-supply-price-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="unit-supply-price-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -837,9 +851,17 @@
   </div>
 
   <div id="unit-a7-section" style="display:none;margin-top:32px;">
-    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">A7 Price History</h3>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div class="chart-wrap"><canvas id="unit-a7-chart"></canvas></div>
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Top Floor Plans — A7, A4, A3</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Your preferred plans — pink = A7 ✦, teal = A4, lavender = A3</div>
+    <div id="unit-a7-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="unit-a7-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="unit-a7-chart"></canvas></div>
+      </div>
+      <div id="unit-a7-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="unit-a7-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -1840,11 +1862,14 @@ let unitChartMode = "min";
 let inventoryChartInstance = null;
 let inventoryChartRecentInstance = null;
 let minPriceChartInstance = null;
+let minPriceChartRecentInstance = null;
 let supplyPriceChartInstance = null;
+let supplyPriceChartRecentInstance = null;
 let dowInvChartInstance = null;
 let dowPriceChartInstance = null;
 let distChartInstance = null;
 let a7ChartInstance = null;
+let a7ChartRecentInstance = null;
 
 function setChartMode(mode) {
   unitChartMode = mode;
@@ -2002,48 +2027,16 @@ function renderUnitChart() {
   }
 }
 
-function renderMinPriceChart() {
-  const section = document.getElementById("unit-minprice-section");
-  if (!section) return;
-  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
-  section.style.display = "";
-
-  const snaps = getScaledSnapshots();
-  const labels = snaps.map(s => s.date);
+function makeMinPriceChartConfig(snaps) {
   const minPrices = snaps.map(s => Math.min.apply(null, Object.values(s.units).map(u => u.minRent)));
-  const avgPrices = snaps.map(s => {
-    const rents = Object.values(s.units).map(u => u.minRent);
-    return Math.round(rents.reduce((a, b) => a + b, 0) / rents.length);
-  });
-
-  if (minPriceChartInstance) minPriceChartInstance.destroy();
-  minPriceChartInstance = new Chart(document.getElementById("unit-minprice-chart").getContext("2d"), {
+  const avgPrices = snaps.map(s => { const r = Object.values(s.units).map(u => u.minRent); return Math.round(r.reduce((a, b) => a + b, 0) / r.length); });
+  return {
     type: "line",
     data: {
-      labels,
+      labels: snaps.map(s => s.date),
       datasets: [
-        {
-          label: "Cheapest Unit",
-          data: minPrices,
-          borderColor: "#FF0090",
-          backgroundColor: "#FF009022",
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          borderWidth: 2,
-        },
-        {
-          label: "Avg Price",
-          data: avgPrices,
-          borderColor: "#0ABAB5",
-          backgroundColor: "transparent",
-          tension: 0.3,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          borderWidth: 2,
-          borderDash: [4, 3],
-        }
+        { label: "Cheapest Unit", data: minPrices, borderColor: "#FF0090", backgroundColor: "#FF009022", fill: true, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2 },
+        { label: "Avg Price", data: avgPrices, borderColor: "#0ABAB5", backgroundColor: "transparent", tension: 0.3, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2, borderDash: [4, 3] }
       ]
     },
     options: {
@@ -2058,50 +2051,19 @@ function renderMinPriceChart() {
         y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } }
       }
     }
-  });
+  };
 }
 
-function renderSupplyPriceChart() {
-  const section = document.getElementById("unit-supply-price-section");
-  if (!section) return;
-  if (unitSnapshots.length < 5) { section.style.display = "none"; return; }
-  section.style.display = "";
-
-  const snaps = getScaledSnapshots();
-  const labels = snaps.map(s => s.date);
+function makeSupplyPriceChartConfig(snaps) {
   const counts = snaps.map(s => Object.keys(s.units).length);
-  const avgPrices = snaps.map(s => {
-    const rents = Object.values(s.units).map(u => u.minRent);
-    return Math.round(rents.reduce((a, b) => a + b, 0) / rents.length);
-  });
-
-  if (supplyPriceChartInstance) supplyPriceChartInstance.destroy();
-  supplyPriceChartInstance = new Chart(document.getElementById("unit-supply-price-chart").getContext("2d"), {
+  const avgPrices = snaps.map(s => { const r = Object.values(s.units).map(u => u.minRent); return Math.round(r.reduce((a, b) => a + b, 0) / r.length); });
+  return {
     type: "line",
     data: {
-      labels,
+      labels: snaps.map(s => s.date),
       datasets: [
-        {
-          label: "Units Available",
-          data: counts,
-          borderColor: "#0ABAB5",
-          backgroundColor: "#0ABAB518",
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-          borderWidth: 2,
-          yAxisID: "yLeft",
-        },
-        {
-          label: "Avg Price",
-          data: avgPrices,
-          borderColor: "#FF0090",
-          backgroundColor: "transparent",
-          tension: 0.3,
-          pointRadius: 3,
-          borderWidth: 2,
-          yAxisID: "yRight",
-        }
+        { label: "Units Available", data: counts, borderColor: "#0ABAB5", backgroundColor: "#0ABAB518", fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: "yLeft" },
+        { label: "Avg Price", data: avgPrices, borderColor: "#FF0090", backgroundColor: "transparent", tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: "yRight" }
       ]
     },
     options: {
@@ -2113,22 +2075,54 @@ function renderSupplyPriceChart() {
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxRotation: 45, minRotation: 0 } },
-        yLeft: {
-          type: "linear", position: "left",
-          beginAtZero: false,
-          afterFit(s) { s.width = 40; },
-          ticks: { font: { family: CHART_FONT.family, size: 10 }, stepSize: 1, maxTicksLimit: 6 },
-          grid: { color: "#f0f0f0" }
-        },
-        yRight: {
-          type: "linear", position: "right",
-          afterFit(s) { s.width = 68; },
-          ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() },
-          grid: { display: false }
-        }
+        yLeft: { type: "linear", position: "left", beginAtZero: false, afterFit(s) { s.width = 40; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, stepSize: 1, maxTicksLimit: 6 }, grid: { color: "#f0f0f0" } },
+        yRight: { type: "linear", position: "right", afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() }, grid: { display: false } }
       }
     }
-  });
+  };
+}
+
+function applySplit(idPrefix, minSnaps) {
+  const showSplit = unitSnapshots.length >= minSnaps;
+  const recentWrap = document.getElementById(idPrefix + "-recent-wrap");
+  const fullLabel = document.getElementById(idPrefix + "-full-label");
+  if (recentWrap) recentWrap.style.display = showSplit ? "" : "none";
+  if (fullLabel) fullLabel.textContent = (showSplit && unitSnapshots.length >= 30) ? "Full Timeline (weekly)" : "Full Timeline";
+  return showSplit;
+}
+
+function renderMinPriceChart() {
+  const section = document.getElementById("unit-minprice-section");
+  if (!section) return;
+  if (unitSnapshots.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const showSplit = applySplit("unit-minprice", 15);
+  if (minPriceChartInstance) minPriceChartInstance.destroy();
+  minPriceChartInstance = new Chart(document.getElementById("unit-minprice-chart").getContext("2d"), makeMinPriceChartConfig(getScaledSnapshots()));
+  if (showSplit) {
+    if (minPriceChartRecentInstance) minPriceChartRecentInstance.destroy();
+    minPriceChartRecentInstance = new Chart(document.getElementById("unit-minprice-chart-recent").getContext("2d"), makeMinPriceChartConfig(unitSnapshots.slice(-10)));
+  } else {
+    if (minPriceChartRecentInstance) { minPriceChartRecentInstance.destroy(); minPriceChartRecentInstance = null; }
+  }
+}
+
+function renderSupplyPriceChart() {
+  const section = document.getElementById("unit-supply-price-section");
+  if (!section) return;
+  if (unitSnapshots.length < 5) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const showSplit = applySplit("unit-supply-price", 15);
+  if (supplyPriceChartInstance) supplyPriceChartInstance.destroy();
+  supplyPriceChartInstance = new Chart(document.getElementById("unit-supply-price-chart").getContext("2d"), makeSupplyPriceChartConfig(getScaledSnapshots()));
+  if (showSplit) {
+    if (supplyPriceChartRecentInstance) supplyPriceChartRecentInstance.destroy();
+    supplyPriceChartRecentInstance = new Chart(document.getElementById("unit-supply-price-chart-recent").getContext("2d"), makeSupplyPriceChartConfig(unitSnapshots.slice(-10)));
+  } else {
+    if (supplyPriceChartRecentInstance) { supplyPriceChartRecentInstance.destroy(); supplyPriceChartRecentInstance = null; }
+  }
 }
 
 function renderDayOfWeekChart() {
@@ -2225,30 +2219,22 @@ function renderPriceDistributionChart() {
   });
 }
 
-function renderA7Chart() {
-  const section = document.getElementById("unit-a7-section");
-  if (!section) return;
-  const a7Codes = [...new Set(unitSnapshots.flatMap(s =>
-    Object.entries(s.units).filter(function(e) { return e[1].plan === "A7"; }).map(function(e) { return e[0]; })
-  ))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-  if (!a7Codes.length) { section.style.display = "none"; return; }
-  section.style.display = "";
-
-  const snaps = getScaledSnapshots();
-  const datasets = a7Codes.map((code, i) => {
+function makeA7ChartConfig(snaps, a7Codes) {
+  const PLAN_COLOR_MAP = { A7: "#FF0090", A4: "#0ABAB5", A3: "#9B84B8" };
+  const datasets = a7Codes.map(code => {
+    const plan = unitSnapshots.flatMap(s => s.units[code] ? [s.units[code].plan] : [])[0] || "";
     const floor = parseInt(String(code)[0]) || 0;
-    const isDream = floor === 6;
+    const isDream = plan === "A7" && floor === 6;
+    const color = PLAN_COLOR_MAP[plan] || "#888";
     return {
-      label: "#" + code + (isDream ? " ✦ Dream" : " floor " + floor),
+      label: "#" + code + " " + plan + (isDream ? " ✦" : ""),
       data: snaps.map(s => s.units[code] ? s.units[code].minRent : null),
-      borderColor: isDream ? "#FF0090" : PLAN_COLORS[i % PLAN_COLORS.length],
-      backgroundColor: (isDream ? "#FF0090" : PLAN_COLORS[i % PLAN_COLORS.length]) + "22",
-      tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+      borderColor: color,
+      backgroundColor: color + "22",
+      tension: 0.3, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: isDream ? 3 : 2,
     };
   });
-
-  if (a7ChartInstance) a7ChartInstance.destroy();
-  a7ChartInstance = new Chart(document.getElementById("unit-a7-chart").getContext("2d"), {
+  return {
     type: "line",
     data: { labels: snaps.map(s => s.date), datasets },
     options: {
@@ -2263,7 +2249,28 @@ function renderA7Chart() {
         y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } }
       }
     }
-  });
+  };
+}
+
+function renderA7Chart() {
+  const section = document.getElementById("unit-a7-section");
+  if (!section) return;
+  const TOP_PLANS = ["A7", "A4", "A3"];
+  const a7Codes = [...new Set(unitSnapshots.flatMap(s =>
+    Object.entries(s.units).filter(function(e) { return TOP_PLANS.includes(e[1].plan); }).map(function(e) { return e[0]; })
+  ))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+  if (!a7Codes.length) { section.style.display = "none"; return; }
+  section.style.display = "";
+
+  const showSplit = applySplit("unit-a7", 15);
+  if (a7ChartInstance) a7ChartInstance.destroy();
+  a7ChartInstance = new Chart(document.getElementById("unit-a7-chart").getContext("2d"), makeA7ChartConfig(getScaledSnapshots(), a7Codes));
+  if (showSplit) {
+    if (a7ChartRecentInstance) a7ChartRecentInstance.destroy();
+    a7ChartRecentInstance = new Chart(document.getElementById("unit-a7-chart-recent").getContext("2d"), makeA7ChartConfig(unitSnapshots.slice(-10), a7Codes));
+  } else {
+    if (a7ChartRecentInstance) { a7ChartRecentInstance.destroy(); a7ChartRecentInstance = null; }
+  }
 }
 
 
