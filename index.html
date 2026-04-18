@@ -1808,7 +1808,7 @@ function renderInsights() {
   if (unitSnapshots.length >= 14) {
     const priceByDay = [[], [], [], [], [], [], []];
     const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-    unitSnapshots.forEach(s => {
+    unitSnapshots.slice(1).forEach(s => {
       const dow = new Date(s.date).getDay();
       const rents = Object.values(s.units).map(u => u.minRent);
       if (rents.length) priceByDay[dow].push(rents.reduce((a, b) => a + b, 0) / rents.length);
@@ -2135,7 +2135,8 @@ function renderDayOfWeekChart() {
   const invByDay = [[], [], [], [], [], [], []];
   const priceByDay = [[], [], [], [], [], [], []];
 
-  unitSnapshots.forEach(s => {
+  // Skip first snapshot (3/18 outlier — prices were anomalously low)
+  unitSnapshots.slice(1).forEach(s => {
     const dow = new Date(s.date).getDay();
     invByDay[dow].push(Object.keys(s.units).length);
     const rents = Object.values(s.units).map(u => u.minRent);
