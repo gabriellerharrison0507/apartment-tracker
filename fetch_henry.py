@@ -54,61 +54,27 @@ def push_to_gist(snapshots, token, gist_id=None):
         return new_id
 
 
-def find_unit_array(data):
-    """Recursively search for an array that looks like unit/floorplan data."""
-    unit_keys = {"UnitCode", "unitCode", "FloorplanName", "floorplanName",
-                 "Beds", "beds", "NumBedrooms", "MinRent", "minRent", "UnitNumber"}
-
-    def looks_like_units(val):
-        if not isinstance(val, list) or not val:
-            return False
-        sample = val[0]
-        return isinstance(sample, dict) and bool(unit_keys & set(sample.keys()))
-
-    if looks_like_units(data):
-        return data
-
-    if isinstance(data, dict):
-        for v in data.values():
-            if looks_like_units(v):
-                return v
-            if isinstance(v, dict):
-                for v2 in v.values():
-                    if looks_like_units(v2):
-                        return v2
-            if isinstance(v, list):
-                for item in v:
-                    result = find_unit_array(item)
-                    if result:
-                        return result
-
-    return None
-
-
-def get_field(obj, *keys):
-    """Return first non-None value from a list of candidate key names."""
-    for k in keys:
-        if obj.get(k) is not None:
-            return obj[k]
-    return None
-
-
-def extract_floor(code):
-    """Extract floor number from unit code (e.g. '501' -> 5, '0501' -> 5)."""
-    stripped = str(code).lstrip("0") or "0"
-    return int(stripped[0]) if stripped else 0
-
-
 def fetch_henry_units():
-    captured = []
+    """
+    The Henry uses api.ws.realpage.com:
+    - GET /v2/property/8715460/floorplans  -> response.floorplans[{id, name}]
+    - GET /v2/property/8715460/units?...   -> response.units[{unitNumber, floorplanId, numberOfBeds, floorNumber, squareFeet, rent, internalAvailableDate}]
+    """
+    fp_data = {}   # floorplanId -> plan name
+    units_data = []
 
     def on_response(response):
         url = response.url
-        if "realpage.com" not in url and "leasestar" not in url:
+        if "api.ws.realpage.com" not in url:
             return
         try:
-            data = response.json()
-            captured.append({"url": url, "data": data})
+            body = response.json()
+            resp = body.get("response", {})
+            if "floorplans" in url:
+                for fp in resp.get("floorplans", []):
+                    fp_data[fp["id"]] = fp.get("name", "")
+            elif "/units" in url:
+                units_data.extend(resp.get("units", []))
         except Exception:
             pass
 
@@ -125,50 +91,37 @@ def fetch_henry_units():
         page = context.new_page()
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.on("response", on_response)
-        page.goto(URL, wait_until="networkidle", timeout=90000)
-        page.wait_for_timeout(5000)
+        page.goto(URL, wait_until="domcontentloaded", timeout=90000)
+        page.wait_for_timeout(8000)
         browser.close()
 
-    print(f"Captured {len(captured)} RealPage API responses:")
-    for r in captured:
-        print(f"  {r['url'][:100]}")
+    print(f"Floorplans captured: {len(fp_data)} | Units captured: {len(units_data)}")
 
-    all_units = None
-    for resp in captured:
-        all_units = find_unit_array(resp["data"])
-        if all_units:
-            print(f"Found unit data ({len(all_units)} items) at: {resp['url'][:80]}")
-            break
-
-    if not all_units:
-        raise ValueError(
-            f"Could not find unit array in {len(captured)} API responses. "
-            f"URLs: {[r['url'][:80] for r in captured]}"
-        )
+    if not units_data:
+        raise ValueError("No units data captured from api.ws.realpage.com/units endpoint")
 
     # Filter to 1BR, exclude plans with no balcony
-    one_bed = []
-    for u in all_units:
-        beds = get_field(u, "Beds", "beds", "NumBedrooms", "numBedrooms") or 0
-        plan = str(get_field(u, "FloorplanName", "floorplanName", "PlanName") or "")
-        if int(beds) == 1 and plan not in EXCLUDED_PLANS:
-            one_bed.append(u)
+    one_bed = [
+        u for u in units_data
+        if u.get("numberOfBeds") == 1
+        and fp_data.get(u.get("floorplanId"), "") not in EXCLUDED_PLANS
+    ]
 
     if not one_bed:
-        raise ValueError(f"No eligible 1BR units found. Total scraped: {len(all_units)}")
+        raise ValueError(f"No eligible 1BR units. Total captured: {len(units_data)}")
 
     today = datetime.now().strftime("%-m/%-d/%Y")
     snapshot = {"date": today, "units": {}}
 
     for u in one_bed:
-        code = str(get_field(u, "UnitCode", "unitCode", "UnitNumber", "unitNumber") or "")
+        code = str(u.get("unitNumber", ""))
         if not code:
             continue
-        plan = str(get_field(u, "FloorplanName", "floorplanName", "PlanName") or "")
-        sqft = int(get_field(u, "SqFt", "sqft", "SquareFeet", "squareFeet") or 0)
-        avail_raw = str(get_field(u, "AvailableDate", "availableDate", "MoveInDate") or "")
-        avail = avail_raw.split("T")[0] if avail_raw else ""
-        rent = int(get_field(u, "MinRent", "minRent", "Rent", "rent") or 0)
+        plan = fp_data.get(u.get("floorplanId"), "")
+        sqft = int(u.get("squareFeet") or 0)
+        avail_raw = u.get("internalAvailableDate", "") or ""
+        avail = avail_raw[:10] if avail_raw else ""  # "2026-06-01 00:00 -0600" -> "2026-06-01"
+        rent = int(u.get("rent") or 0)
         snapshot["units"][code] = {
             "plan": plan,
             "sqft": sqft,
