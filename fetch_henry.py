@@ -54,48 +54,51 @@ def push_to_gist(snapshots, token, gist_id=None):
         return new_id
 
 
+HENRY_API_BASE = "https://api.ws.realpage.com/v2/property/8715460"
+HENRY_API_KEY = "0c69c7f5-816b-4849-8d28-3d39afad0808"
+HENRY_HEADERS = {
+    "x-ws-authkey": HENRY_API_KEY,
+    "Accept": "application/json, text/plain, */*",
+    "Origin": "https://www.thehenrydenver.com",
+    "Referer": "https://www.thehenrydenver.com/",
+}
+
+
 def fetch_henry_units():
     """
-    The Henry uses api.ws.realpage.com:
-    - GET /v2/property/8715460/floorplans  -> response.floorplans[{id, name}]
-    - GET /v2/property/8715460/units?...   -> response.units[{unitNumber, floorplanId, numberOfBeds, floorNumber, squareFeet, rent, internalAvailableDate}]
+    Calls the RealPage ws API directly via Playwright's request context
+    (needed because the server validates browser Client Hints headers).
+    No page load required — just a browser context for the correct headers.
     """
-    fp_data = {}   # floorplanId -> plan name
-    units_data = []
-
-    def on_response(response):
-        url = response.url
-        if "api.ws.realpage.com" not in url:
-            return
-        try:
-            body = response.json()
-            resp = body.get("response", {})
-            if "floorplans" in url:
-                for fp in resp.get("floorplans", []):
-                    fp_data[fp["id"]] = fp.get("name", "")
-            elif "/units" in url:
-                units_data.extend(resp.get("units", []))
-        except Exception:
-            pass
+    today_iso = datetime.now().strftime("%Y-%m-%d")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"]
-        )
+        browser = p.chromium.launch(headless=True)
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800},
-            locale="en-US",
         )
-        page = context.new_page()
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        page.on("response", on_response)
-        page.goto(URL, wait_until="domcontentloaded", timeout=90000)
-        page.wait_for_timeout(8000)
+
+        fp_resp = context.request.get(
+            f"{HENRY_API_BASE}/floorplans",
+            headers=HENRY_HEADERS,
+        )
+        fp_list = fp_resp.json().get("response", {}).get("floorplans", [])
+        fp_map = {fp["id"]: fp["name"] for fp in fp_list}
+        print(f"Floorplans: {len(fp_map)}")
+
+        units_resp = context.request.get(
+            f"{HENRY_API_BASE}/units"
+            f"?available=true&honordisplayorder=true&siteid=8715460&bestprice=true"
+            f"&leaseterm=3,4,5,6,7,8,9,10,11,12,13,14,15&dateneeded={today_iso}",
+            headers=HENRY_HEADERS,
+        )
+        all_units = units_resp.json().get("response", {}).get("units", [])
+        print(f"Units: {len(all_units)}")
+
         browser.close()
 
-    print(f"Floorplans captured: {len(fp_data)} | Units captured: {len(units_data)}")
+    fp_data = fp_map
+    units_data = all_units
 
     if not units_data:
         raise ValueError("No units data captured from api.ws.realpage.com/units endpoint")
@@ -104,7 +107,7 @@ def fetch_henry_units():
     one_bed = [
         u for u in units_data
         if u.get("numberOfBeds") == 1
-        and fp_data.get(u.get("floorplanId"), "") not in EXCLUDED_PLANS
+        and fp_data.get(str(u.get("floorplanId")), "") not in EXCLUDED_PLANS
     ]
 
     if not one_bed:
@@ -117,7 +120,7 @@ def fetch_henry_units():
         code = str(u.get("unitNumber", ""))
         if not code:
             continue
-        plan = fp_data.get(u.get("floorplanId"), "")
+        plan = fp_data.get(str(u.get("floorplanId")), "")
         sqft = int(u.get("squareFeet") or 0)
         avail_raw = u.get("internalAvailableDate", "") or ""
         avail = avail_raw[:10] if avail_raw else ""  # "2026-06-01 00:00 -0600" -> "2026-06-01"

@@ -2670,12 +2670,12 @@ function renderHenryTable() {
         <button onclick="toggleHenryWatch('${r.code}',${r.minRent})" title="${isWatched?'Remove from watch list':'Add to watch list'}"
           style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:0;">${isWatched?"★":"☆"}</button>
       </td>
-      <td><strong>${r.plan}</strong>${prefBadge}${tooHighBadge}</td>
+      <td><strong>${r.plan}</strong>${prefBadge}</td>
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
-      <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
+      <td class="date-col"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;">${isTooHigh ? `<span style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;justify-self:start;margin-left:6px;">Too High</span>` : `<span></span>`}<span><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</span><span></span></div></td>
     </tr>`;
   });
   html += '</tbody></table>';
