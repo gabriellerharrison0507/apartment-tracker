@@ -538,6 +538,13 @@
   }
   .savings-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
   .savings-tab-btn:hover:not(.active) { color: var(--ink); }
+  .tracker-sub-btn {
+    padding: 10px 20px; border: none; background: none; font-family: var(--sans);
+    font-size: 14px; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent;
+    margin-bottom: -3px; transition: all 0.12s; font-weight: 500;
+  }
+  .tracker-sub-btn.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
+  .tracker-sub-btn:hover:not(.active) { color: var(--ink); }
   .sav-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin-bottom: 18px; }
   .sav-card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; font-weight: 600; }
   .sav-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
@@ -620,8 +627,7 @@
   <div class="nav-brand">Room<span>List</span></div>
   <div style="display:flex;gap:6px;">
     <button class="view-btn active" id="btn-list" onclick="setView('list')">My List</button>
-    <button class="view-btn" id="btn-units" onclick="setView('units')">Lyra</button>
-    <button class="view-btn" id="btn-henry" onclick="setView('henry')">The Henry</button>
+    <button class="view-btn" id="btn-tracker" onclick="setView('tracker')">Apartment Tracker</button>
     <button class="view-btn" id="btn-savings" onclick="setView('savings')">Savings</button>
   </div>
   <div class="nav-total">
@@ -712,7 +718,13 @@
   <div class="summary-grid" id="summary-grid"></div>
 </main>
 
-<div class="unit-tracker" id="unit-tracker" style="display:none;">
+<div id="tracker-container" style="display:none;">
+  <div style="border-bottom:3px solid var(--border);max-width:960px;margin:0 auto;padding:24px 24px 0;">
+    <button class="tracker-sub-btn active" id="stab-lyra" onclick="setTrackerTab('lyra')">Lyra</button>
+    <button class="tracker-sub-btn" id="stab-henry" onclick="setTrackerTab('henry')">The Henry</button>
+  </div>
+
+<div class="unit-tracker" id="unit-tracker" style="padding-top:0;">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
     <div>
       <h2 class="room-title">Unit Tracker</h2>
@@ -870,7 +882,7 @@
   <div id="unit-import-msg" style="font-size:13px;color:var(--muted);margin-top:8px;display:none;"></div>
 </div>
 
-<div class="unit-tracker" id="henry-tracker" style="display:none;">
+<div class="unit-tracker" id="henry-tracker" style="display:none;padding-top:0;">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
     <div>
       <h2 class="room-title">The Henry — Unit Tracker</h2>
@@ -1022,6 +1034,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <div id="savings-section" style="display:none;max-width:960px;margin:0 auto;padding:40px 24px 80px;">
@@ -1534,23 +1547,35 @@ async function loadUnitData() {
   }
 }
 
+let currentTrackerTab = "lyra";
+
+function setTrackerTab(tab) {
+  currentTrackerTab = tab;
+  document.getElementById("unit-tracker").style.display = tab === "lyra" ? "" : "none";
+  document.getElementById("henry-tracker").style.display = tab === "henry" ? "" : "none";
+  document.getElementById("stab-lyra").className = "tracker-sub-btn" + (tab === "lyra" ? " active" : "");
+  document.getElementById("stab-henry").className = "tracker-sub-btn" + (tab === "henry" ? " active" : "");
+  if (tab === "lyra") loadUnitData();
+  if (tab === "henry") loadHenryData();
+}
+
 function setView(v) {
+  // Legacy aliases
+  if (v === "units") { setView("tracker"); setTrackerTab("lyra"); return; }
+  if (v === "henry") { setView("tracker"); setTrackerTab("henry"); return; }
+
   const isList = v === "list";
-  const isUnits = v === "units";
-  const isHenry = v === "henry";
+  const isTracker = v === "tracker";
   const isSavings = v === "savings";
   document.getElementById("hero-section").style.display = isList ? "" : "none";
   document.getElementById("room-nav").style.display = isList ? "" : "none";
   document.getElementById("main-list").style.display = isList ? "" : "none";
-  document.getElementById("unit-tracker").style.display = isUnits ? "" : "none";
-  document.getElementById("henry-tracker").style.display = isHenry ? "" : "none";
+  document.getElementById("tracker-container").style.display = isTracker ? "" : "none";
   document.getElementById("savings-section").style.display = isSavings ? "" : "none";
   document.getElementById("btn-list").className = "view-btn" + (isList ? " active" : "");
-  document.getElementById("btn-units").className = "view-btn" + (isUnits ? " active" : "");
-  document.getElementById("btn-henry").className = "view-btn" + (isHenry ? " active" : "");
+  document.getElementById("btn-tracker").className = "view-btn" + (isTracker ? " active" : "");
   document.getElementById("btn-savings").className = "view-btn" + (isSavings ? " active" : "");
-  if (isUnits) loadUnitData();
-  if (isHenry) loadHenryData();
+  if (isTracker) setTrackerTab(currentTrackerTab);
   if (isSavings) renderSavings();
 }
 
