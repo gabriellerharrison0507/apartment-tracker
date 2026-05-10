@@ -1,4 +1,4 @@
-name: Fetch Lyra Unit Prices
+name: Fetch Unit Prices
 
 on:
   schedule:
@@ -11,18 +11,16 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Install dependencies
         run: |
@@ -30,8 +28,14 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Fetch unit prices
+      - name: Fetch Lyra unit prices
         run: python fetch_units.py
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+
+      - name: Fetch Henry unit prices
+        run: python fetch_henry.py
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           GIST_ID: ${{ secrets.GIST_ID }}
@@ -40,6 +44,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/snapshots.json
+          git add data/snapshots.json data/henry-snapshots.json
           git diff --staged --quiet || git commit -m "Daily unit snapshot $(date -u +'%Y-%m-%d')"
           git push
