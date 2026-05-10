@@ -2646,24 +2646,27 @@ function renderHenryTable() {
     const isWatched = henryWatched[r.code]!==undefined;
     const priceDrop = isWatched&&r.minRent<henryWatched[r.code] ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(henryWatched[r.code]-r.minRent).toLocaleString()} since watched</span>` : "";
 
+    const HENRY_NO_BALCONY = ["A3","A5"];
     const isHighFloor = r.floor >= 5;
     const isTooHigh = r.minRent > HENRY_PRICE_CAP;
-    const isDream    = HENRY_ALL_THREE.includes(r.plan) && isHighFloor;
-    const isTopPick  = !isDream && HENRY_ALL_THREE.includes(r.plan);
-    const isGreat    = !isDream && !isTopPick && HENRY_TUB_BALCONY.includes(r.plan) && isHighFloor;
-    const isGood     = !isDream && !isTopPick && !isGreat && (HENRY_TUB_BALCONY.includes(r.plan) || HENRY_BALCONY_ONLY.includes(r.plan));
-    const isHighOnly = !isDream && !isTopPick && !isGreat && !isGood && isHighFloor;
+    const hasNoBalcony = HENRY_NO_BALCONY.includes(r.plan);
+    const isDream   = HENRY_ALL_THREE.includes(r.plan) && isHighFloor;
+    const isTopPick = !isDream && HENRY_ALL_THREE.includes(r.plan);
 
-    let prefBadge="";
-    if (isDream)        prefBadge=`<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
-    else if (isTopPick) prefBadge=`<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
-    else if (isGreat)   prefBadge=`<span class="pref-badge" style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ Great</span>`;
-    else if (isGood)    prefBadge=`<span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Good</span>`;
-    else if (isHighOnly)prefBadge=`<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
-    const tooHighBadge = isTooHigh ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Too High</span>` : "";
+    let prefBadge = "";
+    if (isDream)        prefBadge = `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+    else if (isTopPick) prefBadge = `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+    else {
+      if (!hasNoBalcony && isHighFloor) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
+      if (HENRY_TUB_BALCONY.includes(r.plan))  prefBadge += `<span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#555;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Bathtub</span>`;
+      if (hasNoBalcony) {
+        if (["A3"].includes(r.plan)) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#555;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span><span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#555;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Bathtub</span>`;
+        prefBadge += `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
+      }
+    }
     const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-06-01";
     const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
-    const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
+    const rowBg = isDream ? "background:#fff0f8;" : hasNoBalcony ? "background:#fff8f8;" : isWatched ? "background:#fff8fb;" : "";
 
     html += `<tr style="${rowBg}">
       <td style="text-align:center;padding:10px 6px;">

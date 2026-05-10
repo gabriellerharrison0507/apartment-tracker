@@ -9,8 +9,8 @@ CONFIG_FILE = "gist_config.json"
 URL = "https://www.thehenrydenver.com/Floor-plans.aspx"
 GIST_FILENAME = "henry-snapshots.json"
 
-# Plans excluded — no balcony
-EXCLUDED_PLANS = {"A3", "A5"}
+# No plans excluded — A3/A5 are shown in UI with a "No Balcony" warning label
+EXCLUDED_PLANS = set()
 
 
 def load_config():
