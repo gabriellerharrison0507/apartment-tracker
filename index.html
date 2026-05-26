@@ -1860,7 +1860,7 @@ function renderUnitTable() {
     else if (isGood)     prefBadge = `<span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
     else if (isHighOnly) prefBadge = `<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
 
-    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-06-01";
+    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-08-01";
     const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
 
     const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
@@ -2664,7 +2664,7 @@ function renderHenryTable() {
         prefBadge += `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
       }
     }
-    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-06-01";
+    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-08-01";
     const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
     const rowBg = isDream ? "background:#fff0f8;" : hasNoBalcony ? "background:#fff8f8;" : isWatched ? "background:#fff8fb;" : "";
 
