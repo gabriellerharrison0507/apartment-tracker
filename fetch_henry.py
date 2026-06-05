@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import urllib.request
 from datetime import datetime
 from playwright.sync_api import sync_playwright
@@ -147,10 +148,18 @@ def main():
         with open(SNAPSHOTS_FILE) as f:
             snapshots = json.load(f)
 
-    try:
-        snapshot = fetch_henry_units()
-    except Exception as e:
-        print(f"WARNING: Failed to fetch Henry units: {e}. Skipping today.")
+    snapshot = None
+    for attempt in range(1, 4):
+        try:
+            snapshot = fetch_henry_units()
+            break
+        except Exception as e:
+            print(f"Attempt {attempt}/3 failed: {e}")
+            if attempt < 3:
+                print("Retrying in 30s…")
+                time.sleep(30)
+    if snapshot is None:
+        print("WARNING: All 3 attempts failed. Skipping today.")
         return
 
     existing = next((i for i, s in enumerate(snapshots) if s["date"] == snapshot["date"]), None)
