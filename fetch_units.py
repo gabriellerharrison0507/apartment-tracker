@@ -63,7 +63,10 @@ def fetch_units():
         page = context.new_page()
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(URL, wait_until="load", timeout=90000)
-        page.wait_for_timeout(3000)
+        page.wait_for_function(
+            "document.documentElement.innerHTML.includes('\"UnitCode\"')",
+            timeout=30000,
+        )
         html = page.content()
         browser.close()
 
