@@ -3056,7 +3056,9 @@ function renderHenryTopPlansChart() {
 // ── SAVINGS DASHBOARD ─────────────────────────────────────────
 const SAV_WEEKLY = 1611.55;
 const SAV_MONTHLY_INCOME = SAV_WEEKLY * 52 / 12;
-const SAV_MOVE_OUT = new Date(2026, 5, 1);
+const SAV_CURRENT_SAVINGS = 12000;
+const SAV_GOAL = 20000;
+const SAV_MOVE_OUT = new Date(2026, 7, 1); // Aug 1 target
 
 const SAV_FURNISHINGS_NEEDED = [
   { item: "Bed frame + mattress", cost: 700 },
@@ -3084,7 +3086,7 @@ const SAV_ESSENTIALS_KEYS = ["rent","groceries","carInsurance","studentLoans","g
 const SAV_APT_LABELS = { rent:"Rent + parking + pet", groceries:"Groceries", carInsurance:"Car insurance", studentLoans:"Student loans", subscriptions:"Subscriptions", gym:"Gym", gas:"Gas", eatingOut:"Eating out + activities", petCare:"Pet supplies", miscBuffer:"Misc buffer" };
 
 let savingsTab = "overview";
-let savMomContrib = 0;
+let savWeeklyRate = 850;
 let savRentChoice = 1900;
 
 function setSavingsTab(t) {
@@ -3100,144 +3102,144 @@ function fmt$(n) { return n.toLocaleString("en-US", { style:"currency", currency
 function renderSavings() {
   const now = new Date();
 
-  const momTotal = Object.values(SAV_MOM_EXPENSES).reduce((a,b)=>a+b,0) + savMomContrib;
-  const monthlySaved = SAV_MONTHLY_INCOME - momTotal;
+  const monthlySaved = savWeeklyRate * 52 / 12;
+  const remaining = Math.max(SAV_GOAL - SAV_CURRENT_SAVINGS, 0);
+  const weeksNeeded = savWeeklyRate > 0 ? Math.ceil(remaining / savWeeklyRate) : 999;
+  const monthsNeeded = savWeeklyRate > 0 ? Math.ceil(remaining / monthlySaved) : 999;
+
+  // Projected goal date
+  const goalDate = new Date(now.getTime() + weeksNeeded * 7 * 86400000);
+  const goalDateFmt = goalDate.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+  const beforeAug = goalDate <= SAV_MOVE_OUT;
 
   const aptExpenses = { ...SAV_APT_EXPENSES_BASE, rent: savRentChoice };
   const totalApt = Object.values(aptExpenses).reduce((a,b)=>a+b,0);
   const essentials = Object.fromEntries(Object.entries(aptExpenses).filter(([k]) => SAV_ESSENTIALS_KEYS.includes(k)));
-  const essentialsTotal = Object.values(essentials).reduce((a,b)=>a+b,0);
-  const emergencyFund = essentialsTotal * 6;
-  const totalGoal = emergencyFund + SAV_FURNISHING_TOTAL + SAV_MOVE_IN_TOTAL;
-  const monthsNeeded = monthlySaved > 0 ? Math.ceil(totalGoal/monthlySaved) : 999;
 
-  // Projected move-out date
-  const moveOutDate = new Date(now.getFullYear(), now.getMonth() + monthsNeeded, 1);
-  const moveOutFmt = moveOutDate.toLocaleDateString("en-US", { month:"long", year:"numeric" });
-  const juneTarget = new Date(2026, 5, 1);
-  const beforeJune = moveOutDate <= juneTarget;
-
-  document.getElementById("savings-subhead").textContent = `Saving ${fmt$(Math.round(monthlySaved))}/mo · Goal ${fmt$(totalGoal)}`;
+  document.getElementById("savings-subhead").textContent = `${fmt$(SAV_CURRENT_SAVINGS)} saved · ${fmt$(remaining)} to go · Goal ${fmt$(SAV_GOAL)}`;
 
   const content = document.getElementById("savings-content");
 
   if (savingsTab === "overview") {
-    const milestones = [
-      { label:"Move-in Costs", amount:SAV_MOVE_IN_TOTAL, color:"#FF0090" },
-      { label:"Furnishings", amount:SAV_MOVE_IN_TOTAL+SAV_FURNISHING_TOTAL, color:"#0ABAB5" },
-      { label:"6-Month Emergency Fund", amount:totalGoal, color:"#9B84B8" },
-    ];
+    const progressPct = Math.min((SAV_CURRENT_SAVINGS / SAV_GOAL) * 100, 100).toFixed(1);
+    const moveInCovered = SAV_CURRENT_SAVINGS >= SAV_MOVE_IN_TOTAL;
+    const furnishingsCovered = SAV_CURRENT_SAVINGS >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL);
     content.innerHTML = `
       <div class="sav-hero">
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;">
           <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Projected move-out</div>
-            <div style="font-family:var(--serif);font-size:2.8rem;color:${beforeJune?"#1e6b47":"var(--ink)"};line-height:1;">${moveOutFmt}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:6px;">${monthsNeeded} months at ${fmt$(Math.round(monthlySaved))}/mo</div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Goal reached by</div>
+            <div style="font-family:var(--serif);font-size:2.8rem;color:${beforeAug?"#1e6b47":"var(--ink)"};line-height:1;">${goalDateFmt}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">${weeksNeeded} weeks · ${fmt$(savWeeklyRate)}/wk</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Total goal</div>
-            <div style="font-family:var(--serif);font-size:2.8rem;color:var(--ink);line-height:1;">${fmt$(totalGoal)}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:6px;">move-in + furnishings + 6mo fund</div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--teal-dark);margin-bottom:8px;">Saved so far</div>
+            <div style="font-family:var(--serif);font-size:2.8rem;color:var(--ink);line-height:1;">${fmt$(SAV_CURRENT_SAVINGS)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">of ${fmt$(SAV_GOAL)} goal (${progressPct}%)</div>
           </div>
         </div>
-        ${beforeJune
-          ? `<div class="sav-insight">✅ You're on track to move out by <strong>${moveOutFmt}</strong> — before your June target! You'll have your full goal of <strong>${fmt$(totalGoal)}</strong> saved.</div>`
-          : `<div class="sav-warning">⚠️ At your current savings rate, you'll be ready to move out in <strong>${moveOutFmt}</strong> — a bit after June. Small cuts to spending could move this date up.</div>`
+        <div style="margin-top:20px;">
+          <div class="sav-milestone-bar" style="height:10px;border-radius:5px;">
+            <div class="sav-milestone-fill" style="width:${progressPct}%;background:var(--accent);border-radius:5px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;">
+            <span>$0</span><span style="color:var(--accent);font-weight:600;">${fmt$(SAV_CURRENT_SAVINGS)} now</span><span>${fmt$(SAV_GOAL)}</span>
+          </div>
+        </div>
+        ${beforeAug
+          ? `<div class="sav-insight">✅ On track! You'll hit <strong>${fmt$(SAV_GOAL)}</strong> by <strong>${goalDateFmt}</strong> — before your August target.</div>`
+          : `<div class="sav-warning">⚠️ At ${fmt$(savWeeklyRate)}/wk you'll hit your goal in <strong>${goalDateFmt}</strong>. Bump your weekly rate to move that date up.</div>`
         }
       </div>
 
       <div class="sav-grid3">
         <div class="sav-stat">
-          <div class="sav-stat-val">${fmt$(Math.round(SAV_MONTHLY_INCOME))}</div>
-          <div class="sav-stat-label">Monthly Take-Home</div>
-        </div>
-        <div class="sav-stat">
-          <div class="sav-stat-val" style="color:#E06B6B;">${fmt$(Math.round(momTotal))}</div>
-          <div class="sav-stat-label">Expenses at Mom's</div>
+          <div class="sav-stat-val" style="color:#1e6b47;">${fmt$(savWeeklyRate)}</div>
+          <div class="sav-stat-label">Weekly Savings</div>
         </div>
         <div class="sav-stat">
           <div class="sav-stat-val" style="color:#1e6b47;">${fmt$(Math.round(monthlySaved))}</div>
           <div class="sav-stat-label">Monthly Savings</div>
         </div>
+        <div class="sav-stat">
+          <div class="sav-stat-val">${fmt$(remaining)}</div>
+          <div class="sav-stat-label">Still Needed</div>
+        </div>
       </div>
 
       <div class="sav-card">
-        <div class="sav-card-title">What you're saving toward</div>
-        ${milestones.map((m,i) => {
-          const prev = i===0 ? 0 : milestones[i-1].amount;
-          const portion = m.amount - prev;
-          const pct = (portion/totalGoal*100).toFixed(0);
-          return `<div style="margin-bottom:14px;">
-            <div style="display:flex;justify-content:space-between;">
-              <span style="font-size:13px;color:var(--muted);">${m.label}</span>
-              <span style="font-size:13px;color:${m.color};font-weight:500;">${fmt$(portion)} <span style="color:var(--muted);font-weight:400;">(${pct}%)</span></span>
-            </div>
-            <div class="sav-milestone-bar"><div class="sav-milestone-fill" style="width:${pct}%;background:${m.color};"></div></div>
-          </div>`;
-        }).join("")}
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;display:flex;justify-content:space-between;">
+        <div class="sav-card-title">What ${fmt$(SAV_GOAL)} covers</div>
+        ${[
+          { label:"Move-in costs (first month + deposit)", amount:SAV_MOVE_IN_TOTAL, covered: moveInCovered },
+          { label:"Furnishings (midpoint estimate)", amount:SAV_FURNISHING_TOTAL, covered: furnishingsCovered },
+          { label:"Buffer / emergency start", amount:SAV_GOAL - SAV_MOVE_IN_TOTAL - SAV_FURNISHING_TOTAL, covered: SAV_CURRENT_SAVINGS >= SAV_GOAL },
+        ].map(m => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--muted);">${m.covered ? "✅" : "○"} ${m.label}</span>
+          <span style="font-size:13px;font-weight:500;color:${m.covered?"#1e6b47":"var(--ink)"};">${fmt$(m.amount)}</span>
+        </div>`).join("")}
+        <div style="display:flex;justify-content:space-between;padding-top:12px;margin-top:4px;">
           <span style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;">Total Goal</span>
-          <span style="font-family:var(--serif);font-size:18px;color:var(--ink);">${fmt$(totalGoal)}</span>
+          <span style="font-family:var(--serif);font-size:18px;color:var(--ink);">${fmt$(SAV_GOAL)}</span>
         </div>
       </div>
 
       <div class="sav-card">
-        <div class="sav-card-title">Adjust: Rent payment to mom</div>
+        <div class="sav-card-title">Adjust: Weekly savings rate</div>
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px;">
-          <span>$0</span>
-          <span style="color:var(--accent);font-weight:600;">${fmt$(savMomContrib)}/mo to mom</span>
-          <span>$800</span>
+          <span>$700/wk</span>
+          <span style="color:var(--accent);font-weight:600;">${fmt$(savWeeklyRate)}/wk · ${fmt$(Math.round(monthlySaved))}/mo</span>
+          <span>$1,000/wk</span>
         </div>
-        <input type="range" class="sav-range" min="0" max="800" step="25" value="${savMomContrib}" oninput="savMomContrib=+this.value;renderSavings();" />
-        ${savMomContrib>0 ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Paying mom ${fmt$(savMomContrib)}/mo adds ${Math.ceil(savMomContrib*monthsNeeded/monthlySaved)} month${Math.ceil(savMomContrib*monthsNeeded/monthlySaved)!==1?"s":""} to your timeline.</div>` : ""}
+        <input type="range" class="sav-range" min="700" max="1000" step="25" value="${savWeeklyRate}" oninput="savWeeklyRate=+this.value;renderSavings();" />
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">At this rate you'll reach ${fmt$(SAV_GOAL)} in <strong>${weeksNeeded} weeks</strong> (~${goalDateFmt}).</div>
       </div>
     `;
 
   } else if (savingsTab === "plan") {
-    const projected = monthlySaved * monthsNeeded;
-    const chartMax = Math.max(totalGoal, projected) * 1.05;
-
+    const chartMax = SAV_GOAL * 1.08;
     const barWrapHeight = 120;
     let bars = "";
-    for (let m = 0; m <= monthsNeeded; m++) {
-      const saved = m * monthlySaved;
+    for (let w = 0; w <= weeksNeeded + 1; w++) {
+      const saved = Math.min(SAV_CURRENT_SAVINGS + w * savWeeklyRate, SAV_GOAL * 1.08);
       const hPx = Math.max(Math.min(saved / chartMax, 1) * barWrapHeight, 3);
-      const color = saved >= totalGoal ? "#9B84B8" : saved >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved >= SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
-      bars += '<div class="sav-bar" style="height:' + hPx.toFixed(1) + 'px;background:' + color + ';" title="Month ' + m + ': ' + fmt$(Math.round(saved)) + '"></div>';
+      const color = saved >= SAV_GOAL ? "#9B84B8" : saved >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) ? "#0ABAB5" : saved >= SAV_MOVE_IN_TOTAL ? "#FF0090" : "#A8D8D8";
+      const wkDate = new Date(now.getTime() + w * 7 * 86400000);
+      const wkLabel = "Wk " + w + " (" + wkDate.toLocaleDateString("en-US",{month:"short",day:"numeric"}) + "): " + fmt$(Math.round(saved));
+      bars += '<div class="sav-bar" style="height:' + hPx.toFixed(1) + 'px;background:' + color + ';" title="' + wkLabel + '"></div>';
     }
 
     const milestoneRows = [
-      { label: "Move-in costs", amount: SAV_MOVE_IN_TOTAL, months: Math.ceil(SAV_MOVE_IN_TOTAL / monthlySaved) },
-      { label: "Furnished + moved in", amount: SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL, months: Math.ceil((SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) / monthlySaved) },
-      { label: "Full goal", amount: totalGoal, months: monthsNeeded },
+      { label: "Move-in costs", amount: SAV_MOVE_IN_TOTAL, wks: SAV_CURRENT_SAVINGS >= SAV_MOVE_IN_TOTAL ? 0 : Math.ceil((SAV_MOVE_IN_TOTAL - SAV_CURRENT_SAVINGS) / savWeeklyRate) },
+      { label: "Furnished + moved in", amount: SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL, wks: SAV_CURRENT_SAVINGS >= (SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL) ? 0 : Math.ceil((SAV_MOVE_IN_TOTAL + SAV_FURNISHING_TOTAL - SAV_CURRENT_SAVINGS) / savWeeklyRate) },
+      { label: fmt$(SAV_GOAL) + " goal", amount: SAV_GOAL, wks: weeksNeeded },
     ].map(function(m) {
-      const clr = m.months < monthsNeeded ? "#1e6b47" : "#E06B6B";
-      const lbl = m.months < monthsNeeded ? "✓ ahead of schedule" : "· last milestone";
-      return '<div class="sav-row"><span class="sav-row-label">' + m.label + '</span><div style="text-align:right;"><div class="sav-row-val" style="color:#FF0090;">' + fmt$(m.amount) + '</div><div style="font-size:11px;color:' + clr + ';">month ' + m.months + ' ' + lbl + '</div></div></div>';
+      const already = m.wks === 0;
+      const clr = already ? "#1e6b47" : "#FF0090";
+      const sub = already ? "✓ already covered" : "week " + m.wks + " (~" + new Date(now.getTime() + m.wks*7*86400000).toLocaleDateString("en-US",{month:"short",day:"numeric"}) + ")";
+      return '<div class="sav-row"><span class="sav-row-label">' + m.label + '</span><div style="text-align:right;"><div class="sav-row-val" style="color:' + clr + ';">' + fmt$(m.amount) + '</div><div style="font-size:11px;color:' + clr + ';">' + sub + '</div></div></div>';
     }).join("");
 
-    const incomeRows = [
-      { label: "Weekly paycheck", val: fmt$(SAV_WEEKLY), color: "#1e6b47" },
-      { label: "Monthly income", val: fmt$(Math.round(SAV_MONTHLY_INCOME)), color: "#1e6b47" },
-      { label: "Expenses at mom's", val: fmt$(Math.round(momTotal)), color: "#E06B6B" },
-      { label: "Monthly saved", val: fmt$(Math.round(monthlySaved)), color: "#FF0090" },
-      { label: "Savings rate", val: (monthlySaved / SAV_MONTHLY_INCOME * 100).toFixed(0) + "%", color: "#FF0090" },
+    const savingsRows = [
+      { label: "Current savings", val: fmt$(SAV_CURRENT_SAVINGS), color: "#1e6b47" },
+      { label: "Weekly savings rate", val: fmt$(savWeeklyRate) + "/wk", color: "#1e6b47" },
+      { label: "Monthly savings", val: fmt$(Math.round(monthlySaved)) + "/mo", color: "#1e6b47" },
+      { label: "Still needed", val: fmt$(remaining), color: "#FF0090" },
+      { label: "Weeks to goal", val: weeksNeeded + " weeks", color: "#FF0090" },
     ].map(function(r) {
       return '<div class="sav-row"><span class="sav-row-label">' + r.label + '</span><span class="sav-row-val" style="color:' + r.color + ';">' + r.val + '</span></div>';
     }).join("");
 
-    content.innerHTML = '<div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Month-by-Month Savings</div>'
-      + '<div class="sav-card"><div class="sav-card-title">Savings curve vs. goal (each bar = 1 month)</div>'
+    content.innerHTML = '<div style="font-family:var(--serif);font-size:1.4rem;color:var(--ink);margin-bottom:18px;">Week-by-Week Savings</div>'
+      + '<div class="sav-card"><div class="sav-card-title">Savings trajectory (each bar = 1 week, starting from ' + fmt$(SAV_CURRENT_SAVINGS) + ')</div>'
       + '<div class="sav-bar-wrap">' + bars + '</div>'
       + '<div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;">'
       + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#FF0090;"></div><span style="font-size:12px;color:var(--muted);">Move-in ready</span></div>'
       + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#0ABAB5;"></div><span style="font-size:12px;color:var(--muted);">Furnished</span></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#9B84B8;"></div><span style="font-size:12px;color:var(--muted);">Full goal</span></div>'
+      + '<div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:2px;background:#9B84B8;"></div><span style="font-size:12px;color:var(--muted);">Goal reached</span></div>'
       + '</div></div>'
       + '<div class="sav-grid2">'
       + '<div class="sav-card"><div class="sav-card-title">Key milestones</div>' + milestoneRows + '</div>'
-      + '<div class="sav-card"><div class="sav-card-title">Income snapshot</div>' + incomeRows + '</div>'
+      + '<div class="sav-card"><div class="sav-card-title">Savings snapshot</div>' + savingsRows + '</div>'
       + '</div>';
 
   } else if (savingsTab === "budget") {
