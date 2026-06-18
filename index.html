@@ -777,6 +777,8 @@
     <div class="empty-state">Loading...</div>
   </div>
 
+  <div id="unit-leased-section" style="display:none;margin-top:40px;"></div>
+
   <div id="unit-chart-section" style="display:none;margin-top:48px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <h3 style="font-family:var(--serif);font-size:24px;">Price Trends</h3>
@@ -933,6 +935,8 @@
   <div class="unit-table-wrap" id="henry-table-wrap">
     <div class="empty-state">Loading...</div>
   </div>
+
+  <div id="henry-leased-section" style="display:none;margin-top:40px;"></div>
 
   <div id="henry-chart-section" style="display:none;margin-top:48px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
@@ -1752,6 +1756,103 @@ function toggleWatchedFilter() {
   renderUnitTable();
 }
 
+// ── LEASED UNITS ─────────────────────────────────────────────
+
+function computeLeasedUnits(snapshots) {
+  if (snapshots.length < 2) return [];
+  const latest = snapshots[snapshots.length - 1];
+  const history = {};
+  snapshots.forEach(s => {
+    Object.entries(s.units).forEach(([code, u]) => {
+      if (!history[code]) history[code] = { plan: u.plan, sqft: u.sqft, apps: [] };
+      history[code].apps.push({ date: s.date, rent: u.minRent });
+    });
+  });
+  const parseDate = d => { const [m, dy, y] = d.split('/'); return new Date(+y, +m - 1, +dy); };
+  const leased = [];
+  Object.entries(history).forEach(([code, h]) => {
+    if (latest.units[code] || h.apps.length < 2) return;
+    const rents = h.apps.map(a => a.rent);
+    const last = h.apps[h.apps.length - 1];
+    const first = h.apps[0];
+    const msPerDay = 86400000;
+    const daysListed = Math.round((parseDate(last.date) - parseDate(first.date)) / msPerDay) + 1;
+    leased.push({ code, plan: h.plan, sqft: h.sqft, leasedPrice: last.rent,
+      minPrice: Math.min(...rents), maxPrice: Math.max(...rents),
+      daysListed, lastDate: last.date, firstDate: first.date });
+  });
+  leased.sort((a, b) => parseDate(b.lastDate) - parseDate(a.lastDate));
+  return leased;
+}
+
+function leasedPriceBar(leasedPrice, minPrice, maxPrice) {
+  if (minPrice === maxPrice) return `<span style="font-size:11px;color:var(--muted);">flat $${minPrice.toLocaleString()}</span>`;
+  const pct = Math.round(((leasedPrice - minPrice) / (maxPrice - minPrice)) * 100);
+  const label = pct <= 20 ? "near low" : pct >= 80 ? "near high" : "mid range";
+  const dotColor = pct <= 20 ? "#2a9d6a" : pct >= 80 ? "#c0302a" : "#0ABAB5";
+  return `<div style="display:flex;align-items:center;gap:6px;">
+    <span style="font-size:10px;color:var(--muted);white-space:nowrap;">$${minPrice.toLocaleString()}</span>
+    <div style="position:relative;width:72px;height:5px;background:#e0e0e0;border-radius:3px;flex-shrink:0;">
+      <div style="position:absolute;left:${pct}%;transform:translateX(-50%);top:-2.5px;width:10px;height:10px;background:${dotColor};border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px ${dotColor};"></div>
+    </div>
+    <span style="font-size:10px;color:var(--muted);white-space:nowrap;">$${maxPrice.toLocaleString()}</span>
+    <span style="font-size:10px;color:${dotColor};white-space:nowrap;">${label}</span>
+  </div>`;
+}
+
+function renderLeasedSection(snapshots, sectionId, prefBadgeFn) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const leased = computeLeasedUnits(snapshots);
+  if (!leased.length) { section.style.display = "none"; return; }
+  section.style.display = "";
+  let html = `<h3 style="font-family:var(--serif);font-size:22px;margin-bottom:4px;">Leased Units</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Units that disappeared from availability — likely leased.</p>
+    <div style="overflow-x:auto;"><table class="unit-table"><thead><tr>
+      <th>Plan</th><th>Unit</th><th>Days Listed</th><th>Leased Price</th><th>Price Range</th>
+    </tr></thead><tbody>`;
+  leased.forEach(u => {
+    const badge = prefBadgeFn(u.plan, u.code);
+    html += `<tr style="opacity:0.85;">
+      <td><strong>${u.plan}</strong>${badge}</td>
+      <td>#${u.code}</td>
+      <td style="color:var(--muted);">${u.daysListed}d</td>
+      <td><span style="font-family:var(--serif);font-size:17px;">$${u.leasedPrice.toLocaleString()}</span>
+        <div style="font-size:10px;color:var(--muted);">last seen ${u.lastDate}</div></td>
+      <td>${leasedPriceBar(u.leasedPrice, u.minPrice, u.maxPrice)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  section.innerHTML = html;
+}
+
+function lyraLeasedBadge(plan, code) {
+  const floor = parseInt(String(code)[0]) || 0;
+  const hasTub = ["A4","A7"].includes(plan);
+  const hasIsland = ["A3","A4","A7"].includes(plan);
+  const isHighFloor = floor >= 5;
+  const isDream = plan === "A7" && floor === 6;
+  const isTopPick = !isDream && (plan === "A7" || (hasTub && isHighFloor));
+  const isGreat = !isDream && !isTopPick && (hasTub || (hasIsland && isHighFloor));
+  if (isDream) return `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+  if (isTopPick) return `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+  if (isGreat) return `<span class="pref-badge" style="font-size:10px;background:#C8F0EE;color:#008B87;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ Great</span>`;
+  return "";
+}
+
+function henryLeasedBadge(plan, code) {
+  const floor = parseInt(String(code).replace(/^0+/,"")[0]) || 0;
+  const isHighFloor = floor >= 5;
+  const isDream = HENRY_ALL_THREE.includes(plan) && isHighFloor;
+  const isTopPick = !isDream && HENRY_ALL_THREE.includes(plan);
+  if (isDream) return `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+  if (isTopPick) return `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+  if (["A3","A5"].includes(plan)) return `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
+  return "";
+}
+
+// ─────────────────────────────────────────────────────────────
+
 function renderUnitTable() {
   const wrap = document.getElementById("unit-table-wrap");
   renderDashboard();
@@ -1880,6 +1981,7 @@ function renderUnitTable() {
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  renderLeasedSection(unitSnapshots, "unit-leased-section", lyraLeasedBadge);
   renderAllCharts();
 }
 
@@ -2683,6 +2785,7 @@ function renderHenryTable() {
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
+  renderLeasedSection(henrySnapshots, "henry-leased-section", henryLeasedBadge);
   renderAllHenryCharts();
 }
 
