@@ -65,7 +65,7 @@ def fetch_units():
         page.goto(URL, wait_until="load", timeout=90000)
         page.wait_for_function(
             "document.documentElement.innerHTML.includes('\"UnitCode\"')",
-            timeout=30000,
+            timeout=10000,
         )
         html = page.content()
         browser.close()
@@ -128,8 +128,8 @@ def main():
         except Exception as e:
             print(f"Attempt {attempt}/3 failed: {e}")
             if attempt < 3:
-                print("Retrying in 30s…")
-                time.sleep(30)
+                print("Retrying in 15s…")
+                time.sleep(15)
     if snapshot is None:
         print("WARNING: All 3 attempts failed. Skipping today.")
         return
