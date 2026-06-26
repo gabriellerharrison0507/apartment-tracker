@@ -4667,5 +4667,100 @@
         "minRent": 2053
       }
     }
+  },
+  {
+    "date": "6/26/2026",
+    "units": {
+      "368": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-06-02",
+        "minRent": 2198
+      },
+      "770": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-06-12",
+        "minRent": 2202
+      },
+      "684": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-06-21",
+        "minRent": 2282
+      },
+      "402": {
+        "plan": "A9",
+        "sqft": 903,
+        "availDate": "2026-06-25",
+        "minRent": 2285
+      },
+      "774": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-01",
+        "minRent": 2213
+      },
+      "676": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-06",
+        "minRent": 2138
+      },
+      "510": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-13",
+        "minRent": 2142
+      },
+      "604": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-20",
+        "minRent": 2162
+      },
+      "507": {
+        "plan": "A1",
+        "sqft": 717,
+        "availDate": "2026-07-20",
+        "minRent": 2445
+      },
+      "761": {
+        "plan": "A3",
+        "sqft": 722,
+        "availDate": "2026-07-25",
+        "minRent": 2045
+      },
+      "427": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-24",
+        "minRent": 2243
+      },
+      "623": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-28",
+        "minRent": 2284
+      },
+      "359": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-08-22",
+        "minRent": 1816
+      },
+      "778": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-08-24",
+        "minRent": 2229
+      },
+      "418": {
+        "plan": "A4",
+        "sqft": 832,
+        "availDate": "2026-09-02",
+        "minRent": 2053
+      }
+    }
   }
 ]
