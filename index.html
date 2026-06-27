@@ -3178,7 +3178,7 @@ function renderModeraDashboard() {
     { label:"Avg Price", value: avgPrice ? "$"+avgPrice.toLocaleString() : "—", sub: "2BR/2BA" },
     { label:"Lowest Price", value: minPrice ? "$"+minPrice.toLocaleString() : "—", sub: "available now" },
     { label:"Units Leased", value: goneUnits.length, sub: goneUnits.length ? goneUnits.map(([c,u])=>`#${c} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data", valueClass: goneUnits.length ? "dash-up" : "" },
-  ].map(d => `<div class="dash-card"><div class="dash-val ${d.valueClass||""}">${d.value}</div><div class="dash-label">${d.label}</div><div class="dash-sub">${d.sub}</div></div>`).join("");
+  ].map(d => `<div class="dash-card"><div class="dash-card-label">${d.label}</div><div class="dash-card-value ${d.valueClass||""}">${d.value}</div><div class="dash-card-sub">${d.sub}</div></div>`).join("");
 }
 
 function applyModeraFilters() {
