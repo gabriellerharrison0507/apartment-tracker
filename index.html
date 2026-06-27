@@ -722,6 +722,7 @@
   <div style="border-bottom:3px solid var(--border);max-width:960px;margin:0 auto;padding:24px 24px 0;">
     <button class="tracker-sub-btn active" id="stab-lyra" onclick="setTrackerTab('lyra')">Lyra</button>
     <button class="tracker-sub-btn" id="stab-henry" onclick="setTrackerTab('henry')">The Henry</button>
+    <button class="tracker-sub-btn" id="stab-modera" onclick="setTrackerTab('modera')">Modera</button>
   </div>
 
 <div class="unit-tracker" id="unit-tracker" style="padding-top:0;">
@@ -1039,6 +1040,59 @@
     </div>
   </div>
 </div>
+
+<div class="unit-tracker" id="modera-tracker" style="display:none;padding-top:0;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
+    <div>
+      <h2 class="room-title">Unit Tracker</h2>
+      <div class="room-meta">2BR/2BA pricing &amp; availability at Modera West Wash Park — updated daily at 9am</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="modera-last-updated" style="font-size:12px;color:var(--muted);"></div>
+      <button onclick="localStorage.removeItem('aptTracker_moderaSnapshots');moderaSnapshots=[];loadModeraData();" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="dash-grid" id="modera-dash-grid" style="display:none;"></div>
+
+  <div class="unit-filter-bar" id="modera-filters" style="display:none;">
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Plan Type</div>
+      <select id="filter-modera-plan" onchange="applyModeraFilters()">
+        <option value="all">All Plans</option>
+      </select>
+    </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Floor</div>
+      <select id="filter-modera-floor" onchange="applyModeraFilters()">
+        <option value="all">All Floors</option>
+      </select>
+    </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Available By</div>
+      <input id="filter-modera-date" type="date" oninput="applyModeraFilters()" />
+    </div>
+    <div>
+      <div class="detail-label" style="margin-bottom:4px;">Max Price</div>
+      <input id="filter-modera-price" type="number" placeholder="e.g. 4000" oninput="applyModeraFilters()" />
+    </div>
+    <button onclick="clearModeraFilters()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;">Clear</button>
+  </div>
+
+  <div class="unit-table-wrap" id="modera-table-wrap">
+    <div class="empty-state">Loading...</div>
+  </div>
+
+  <div id="modera-leased-section" style="display:none;margin-top:40px;"></div>
+
+  <div id="modera-chart-section" style="display:none;margin-top:48px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Price Trends</h3>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+      <div class="chart-wrap-tall"><canvas id="modera-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div id="savings-section" style="display:none;max-width:960px;margin:0 auto;padding:40px 24px 80px;">
@@ -1557,10 +1611,13 @@ function setTrackerTab(tab) {
   currentTrackerTab = tab;
   document.getElementById("unit-tracker").style.display = tab === "lyra" ? "" : "none";
   document.getElementById("henry-tracker").style.display = tab === "henry" ? "" : "none";
-  document.getElementById("stab-lyra").className = "tracker-sub-btn" + (tab === "lyra" ? " active" : "");
-  document.getElementById("stab-henry").className = "tracker-sub-btn" + (tab === "henry" ? " active" : "");
+  document.getElementById("modera-tracker").style.display = tab === "modera" ? "" : "none";
+  ["lyra","henry","modera"].forEach(t => {
+    document.getElementById("stab-"+t).className = "tracker-sub-btn" + (tab === t ? " active" : "");
+  });
   if (tab === "lyra") loadUnitData();
   if (tab === "henry") loadHenryData();
+  if (tab === "modera") loadModeraData();
 }
 
 function setView(v) {
@@ -3051,6 +3108,257 @@ function renderHenryTopPlansChart() {
     if (henryTopPlansRecentInstance) henryTopPlansRecentInstance.destroy();
     henryTopPlansRecentInstance = new Chart(document.getElementById("henry-top-plans-chart-recent").getContext("2d"), makeHenryTopPlansConfig(henrySnapshots.slice(-10), topCodes));
   } else { if (henryTopPlansRecentInstance) { henryTopPlansRecentInstance.destroy(); henryTopPlansRecentInstance=null; } }
+}
+
+// ── MODERA WEST WASH PARK ─────────────────────────────────────
+
+const MODERA_GIST_FILENAME = "modera-snapshots.json";
+// Badge logic:
+// Dream  = B06 corner unit (unit # ends in "01": 901, 801, 701…)
+// Top Pick = B06 non-corner OR B05
+// High Floor = floor >= 5  |  Large = sqft >= 1350
+const MODERA_DREAM_PLAN = "B06";
+const MODERA_TOP_PLANS  = ["B05", "B06"];
+const MODERA_LARGE_SQFT = 1350;
+
+let moderaSnapshots = [];
+let moderaFilterPlan = "all", moderaFilterMaxPrice = "", moderaFilterDate = "", moderaFilterFloor = "all";
+let moderaSortCol = "plan", moderaSortDir = "asc";
+let moderaWatched = {};
+
+const _savedModeraSnaps = localStorage.getItem("aptTracker_moderaSnapshots");
+if (_savedModeraSnaps) { try { moderaSnapshots = JSON.parse(_savedModeraSnaps); } catch(e) {} }
+try { moderaWatched = JSON.parse(localStorage.getItem("aptTracker_moderaWatched")||"{}"); } catch(e) {}
+
+async function loadModeraFromGist() {
+  try {
+    const rawUrl = "https://gist.githubusercontent.com/" + GIST_OWNER + "/" + GIST_ID_DEFAULT + "/raw/" + MODERA_GIST_FILENAME + "?t=" + Date.now();
+    const res = await fetch(rawUrl, { cache: "no-store" });
+    if (!res.ok) return false;
+    const snaps = await res.json();
+    if (Array.isArray(snaps) && snaps.length) {
+      moderaSnapshots = snaps;
+      localStorage.setItem("aptTracker_moderaSnapshots", JSON.stringify(moderaSnapshots));
+      return true;
+    }
+  } catch(e) { console.error("Modera Gist load failed", e); }
+  return false;
+}
+
+async function loadModeraData() {
+  const el = document.getElementById("modera-last-updated");
+  const wrap = document.getElementById("modera-table-wrap");
+  if (moderaSnapshots.length) {
+    el.textContent = "Last snapshot: " + moderaSnapshots[moderaSnapshots.length - 1].date;
+    renderModeraTable();
+    const updated = await loadModeraFromGist();
+    if (updated) { el.textContent = "Last snapshot: " + moderaSnapshots[moderaSnapshots.length - 1].date; renderModeraTable(); }
+  } else {
+    wrap.innerHTML = '<div class="empty-state">Loading from cloud…</div>';
+    await loadModeraFromGist();
+    if (moderaSnapshots.length) el.textContent = "Last snapshot: " + moderaSnapshots[moderaSnapshots.length - 1].date;
+    renderModeraTable();
+  }
+}
+
+function renderModeraDashboard() {
+  const grid = document.getElementById("modera-dash-grid");
+  if (!moderaSnapshots.length) { grid.style.display = "none"; return; }
+  grid.style.display = "";
+  const latest = moderaSnapshots[moderaSnapshots.length - 1];
+  const prev = moderaSnapshots.length > 1 ? moderaSnapshots[moderaSnapshots.length - 2] : null;
+  const units = Object.values(latest.units);
+  const prevUnits = prev ? Object.values(prev.units) : [];
+  const goneUnits = prev ? Object.entries(prev.units).filter(([c]) => !latest.units[c]) : [];
+  const newUnits  = prev ? Object.entries(latest.units).filter(([c]) => !prev.units[c]) : [];
+  const avgPrice = units.length ? Math.round(units.reduce((s,u) => s+u.minRent, 0) / units.length) : 0;
+  const minPrice = units.length ? Math.min(...units.map(u => u.minRent)) : 0;
+  grid.innerHTML = [
+    { label:"Available", value: units.length, sub: prev ? (units.length > prevUnits.length ? "▲ " : units.length < prevUnits.length ? "▼ " : "") + Math.abs(units.length - prevUnits.length) + " from yesterday" : "2BR/2BA units" },
+    { label:"Avg Price", value: avgPrice ? "$"+avgPrice.toLocaleString() : "—", sub: "2BR/2BA" },
+    { label:"Lowest Price", value: minPrice ? "$"+minPrice.toLocaleString() : "—", sub: "available now" },
+    { label:"Units Leased", value: goneUnits.length, sub: goneUnits.length ? goneUnits.map(([c,u])=>`#${c} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data", valueClass: goneUnits.length ? "dash-up" : "" },
+  ].map(d => `<div class="dash-card"><div class="dash-val ${d.valueClass||""}">${d.value}</div><div class="dash-label">${d.label}</div><div class="dash-sub">${d.sub}</div></div>`).join("");
+}
+
+function applyModeraFilters() {
+  moderaFilterPlan = document.getElementById("filter-modera-plan").value;
+  moderaFilterMaxPrice = document.getElementById("filter-modera-price").value;
+  moderaFilterDate = document.getElementById("filter-modera-date").value;
+  moderaFilterFloor = document.getElementById("filter-modera-floor").value;
+  renderModeraTable();
+}
+function clearModeraFilters() {
+  document.getElementById("filter-modera-plan").value = "all";
+  document.getElementById("filter-modera-price").value = "";
+  document.getElementById("filter-modera-date").value = "";
+  document.getElementById("filter-modera-floor").value = "all";
+  moderaFilterPlan = "all"; moderaFilterMaxPrice = ""; moderaFilterDate = ""; moderaFilterFloor = "all";
+  moderaSortCol = "plan"; moderaSortDir = "asc";
+  renderModeraTable();
+}
+function setModeraSortCol(col) {
+  if (moderaSortCol === col) moderaSortDir = moderaSortDir === "asc" ? "desc" : "asc";
+  else { moderaSortCol = col; moderaSortDir = "asc"; }
+  renderModeraTable();
+}
+function moderaSortArrow(col) {
+  if (moderaSortCol !== col) return ' <span style="color:#ccc;font-size:10px;">↕</span>';
+  return ' <span style="font-size:10px;">' + (moderaSortDir === "asc" ? "↑" : "↓") + '</span>';
+}
+function toggleModeraWatch(code, price) {
+  if (moderaWatched[code] !== undefined) delete moderaWatched[code]; else moderaWatched[code] = price;
+  localStorage.setItem("aptTracker_moderaWatched", JSON.stringify(moderaWatched));
+  renderModeraTable();
+}
+
+function moderaPrefBadge(plan, code) {
+  const floor = parseInt(code) / 100 | 0;
+  const isCorner = String(code).slice(-2) === "01";
+  const isDream   = plan === MODERA_DREAM_PLAN && isCorner;
+  const isTopPick = !isDream && MODERA_TOP_PLANS.includes(plan);
+  const isHighFloor = floor >= 5;
+  let badge = "";
+  if (isDream)        badge = `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+  else if (isTopPick) badge = `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+  else if (isHighFloor) badge += `<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
+  return badge;
+}
+
+function renderModeraTable() {
+  const wrap = document.getElementById("modera-table-wrap");
+  renderModeraDashboard();
+  if (!moderaSnapshots.length) {
+    wrap.innerHTML = '<div class="empty-state">No data yet — scraper runs daily at 9am.</div>';
+    document.getElementById("modera-filters").style.display = "none";
+    return;
+  }
+  const allPlans = [...new Set(moderaSnapshots.flatMap(s => Object.values(s.units).map(u => u.plan)))].sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+  const planSelect = document.getElementById("filter-modera-plan");
+  const currentPlan = planSelect.value;
+  planSelect.innerHTML = '<option value="all">All Plans</option>' + allPlans.map(p => `<option value="${p}"${p===currentPlan?" selected":""}>${p}</option>`).join("");
+  document.getElementById("modera-filters").style.display = "flex";
+
+  const latest = moderaSnapshots[moderaSnapshots.length - 1];
+  const prev = moderaSnapshots.length > 1 ? moderaSnapshots[moderaSnapshots.length - 2] : null;
+  const daysListedMap = {};
+  moderaSnapshots.forEach(s => { Object.keys(s.units).forEach(c => { daysListedMap[c] = (daysListedMap[c]||0)+1; }); });
+
+  let rows = Object.entries(latest.units).map(([code, u]) => ({
+    code, plan: u.plan, sqft: u.sqft,
+    floor: u.floor || (parseInt(code) / 100 | 0),
+    availDateRaw: u.availDate,
+    availDateFmt: u.availDate ? new Date(u.availDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}) : "—",
+    minRent: u.minRent,
+    prevRent: prev?.units[code]?.minRent ?? null,
+    daysListed: daysListedMap[code] || 1,
+  }));
+
+  const allFloors = [...new Set(rows.map(r => r.floor))].sort((a,b) => a-b);
+  const floorSelect = document.getElementById("filter-modera-floor");
+  const currentFloor = floorSelect.value;
+  floorSelect.innerHTML = '<option value="all">All Floors</option>' + allFloors.map(f => `<option value="${f}"${String(f)===currentFloor?" selected":""}>${f}</option>`).join("");
+
+  if (moderaFilterPlan !== "all") rows = rows.filter(r => r.plan === moderaFilterPlan);
+  if (moderaFilterMaxPrice) rows = rows.filter(r => r.minRent <= parseFloat(moderaFilterMaxPrice));
+  if (moderaFilterDate) rows = rows.filter(r => !r.availDateRaw || r.availDateRaw <= moderaFilterDate);
+  if (moderaFilterFloor !== "all") rows = rows.filter(r => r.floor === parseInt(moderaFilterFloor));
+
+  rows.sort((a,b) => {
+    let cmp = 0;
+    if (moderaSortCol === "price") cmp = a.minRent - b.minRent;
+    else if (moderaSortCol === "avail") cmp = (a.availDateRaw||"9999") > (b.availDateRaw||"9999") ? 1 : -1;
+    else if (moderaSortCol === "sqft") cmp = a.sqft - b.sqft;
+    else if (moderaSortCol === "floor") cmp = a.floor - b.floor;
+    else if (moderaSortCol === "days") cmp = a.daysListed - b.daysListed;
+    else cmp = a.plan !== b.plan ? a.plan.localeCompare(b.plan,undefined,{numeric:true}) : a.code.localeCompare(b.code,undefined,{numeric:true});
+    return moderaSortDir === "asc" ? cmp : -cmp;
+  });
+
+  if (!rows.length) { wrap.innerHTML = '<div class="empty-state">No units match your filters.</div>'; return; }
+
+  const thS = "cursor:pointer;user-select:none;";
+  let html = `<table class="unit-table"><thead><tr>
+    <th style="width:36px;"></th>
+    <th style="${thS}" onclick="setModeraSortCol('plan')">Plan${moderaSortArrow('plan')}</th>
+    <th style="${thS}" onclick="setModeraSortCol('sqft')">Sq Ft${moderaSortArrow('sqft')}</th>
+    <th style="${thS}" onclick="setModeraSortCol('floor')">Unit${moderaSortArrow('floor')}</th>
+    <th style="${thS}" onclick="setModeraSortCol('avail')">Avail Date${moderaSortArrow('avail')}</th>
+    <th style="${thS}" onclick="setModeraSortCol('days')">Days Listed${moderaSortArrow('days')}</th>
+    <th class="date-col" style="${thS}" onclick="setModeraSortCol('price')">Today's Price${moderaSortArrow('price')}<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    const isCorner = String(r.code).slice(-2) === "01";
+    const isHighFloor = r.floor >= 5;
+    const isDream   = r.plan === MODERA_DREAM_PLAN && isCorner;
+    const isTopPick = !isDream && MODERA_TOP_PLANS.includes(r.plan);
+    const isLarge   = r.sqft >= MODERA_LARGE_SQFT;
+
+    let prefBadge = "";
+    if (isDream)        prefBadge = `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
+    else if (isTopPick) prefBadge = `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
+    else {
+      if (isHighFloor) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
+    }
+    if (isLarge) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#eef5e8;color:#3a7d2a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Large</span>`;
+
+    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-08-01";
+    const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
+
+    const isWatched = moderaWatched[r.code] !== undefined;
+    const priceDrop = isWatched && r.minRent < moderaWatched[r.code] ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(moderaWatched[r.code]-r.minRent).toLocaleString()} since watched</span>` : "";
+
+    let cls = "price-same", change = "";
+    if (r.prevRent != null) {
+      if (r.minRent < r.prevRent) { cls = "price-down"; change = `<span style="font-size:11px;"> ↓$${(r.prevRent-r.minRent).toLocaleString()}</span>`; }
+      else if (r.minRent > r.prevRent) { cls = "price-up"; change = `<span style="font-size:11px;"> ↑$${(r.minRent-r.prevRent).toLocaleString()}</span>`; }
+      else { change = `<span style="font-size:11px;color:var(--muted);"> –</span>`; }
+    }
+
+    const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
+    html += `<tr style="${rowBg}">
+      <td style="text-align:center;padding:10px 6px;">
+        <button onclick="toggleModeraWatch('${r.code}',${r.minRent})" title="${isWatched?'Remove from watch list':'Add to watch list'}"
+          style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:0;">${isWatched?"★":"☆"}</button>
+      </td>
+      <td><strong>${r.plan}</strong>${prefBadge}</td>
+      <td style="color:var(--muted);">${r.sqft ? r.sqft+" sqft" : "—"}</td>
+      <td>#${r.code}</td>
+      <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
+      <td style="color:var(--muted);">${r.daysListed}d</td>
+      <td class="date-col"><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  renderLeasedSection(moderaSnapshots, "modera-leased-section", moderaPrefBadge);
+  renderModeraPriceChart();
+}
+
+let moderaChartInstance = null;
+function renderModeraPriceChart() {
+  const section = document.getElementById("modera-chart-section");
+  if (!section || moderaSnapshots.length < 2) { if (section) section.style.display = "none"; return; }
+  section.style.display = "";
+  const codes = [...new Set(moderaSnapshots.flatMap(s => Object.keys(s.units)))].sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
+  const MCOLORS = ["#FF0090","#0ABAB5","#9B84B8","#f4a261","#2a9d8f","#e76f51","#457b9d","#a8dadc"];
+  const datasets = codes.map((code, i) => {
+    const plan = moderaSnapshots.flatMap(s => s.units[code] ? [s.units[code].plan] : [])[0] || "";
+    const isCorner = String(code).slice(-2) === "01";
+    const isDream = plan === MODERA_DREAM_PLAN && isCorner;
+    const color = MCOLORS[i % MCOLORS.length];
+    return { label:"#"+code+" "+plan+(isDream?" ✦":""), data:moderaSnapshots.map(s=>s.units[code]?s.units[code].minRent:null), borderColor:color, backgroundColor:color+"22", tension:0.3, spanGaps:true, pointRadius:4, pointHoverRadius:6, borderWidth:isDream?3:2 };
+  });
+  if (moderaChartInstance) moderaChartInstance.destroy();
+  moderaChartInstance = new Chart(document.getElementById("modera-chart").getContext("2d"), {
+    type:"line", data:{ labels:moderaSnapshots.map(s=>s.date), datasets },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false},
+      plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} }
+    }
+  });
 }
 
 // ── SAVINGS DASHBOARD ─────────────────────────────────────────

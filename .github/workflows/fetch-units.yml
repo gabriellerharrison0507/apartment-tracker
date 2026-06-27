@@ -40,10 +40,16 @@ jobs:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           GIST_ID: ${{ secrets.GIST_ID }}
 
+      - name: Fetch Modera unit prices
+        run: python fetch_modera.py
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/snapshots.json data/henry-snapshots.json
+          git add data/snapshots.json data/henry-snapshots.json data/modera-snapshots.json
           git diff --staged --quiet || git commit -m "Daily unit snapshot $(date -u +'%Y-%m-%d')"
           git push
