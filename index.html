@@ -1086,9 +1086,96 @@
 
   <div id="modera-chart-section" style="display:none;margin-top:48px;">
     <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Price Trends</h3>
+    <div id="modera-chart-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="modera-chart-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap-tall"><canvas id="modera-chart"></canvas></div>
+      </div>
+      <div id="modera-chart-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap-tall"><canvas id="modera-chart-recent"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modera-inventory-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Inventory Over Time</h3>
+    <div id="modera-inventory-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="modera-inventory-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="modera-inventory-chart"></canvas></div>
+      </div>
+      <div id="modera-inventory-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="modera-inventory-chart-recent"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modera-minprice-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:16px;">Cheapest Unit Over Time</h3>
+    <div id="modera-minprice-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="modera-minprice-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="modera-minprice-chart"></canvas></div>
+      </div>
+      <div id="modera-minprice-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="modera-minprice-chart-recent"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modera-supply-price-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Supply vs. Avg Price</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Do prices rise when fewer units are available?</div>
+    <div id="modera-supply-price-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="modera-supply-price-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="modera-supply-price-chart"></canvas></div>
+      </div>
+      <div id="modera-supply-price-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="modera-supply-price-chart-recent"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modera-dow-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Day-of-Week Patterns</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Do prices or availability shift on certain days?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Avg Units Available</div>
+        <div class="chart-wrap"><canvas id="modera-dow-inv-chart"></canvas></div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Avg Price</div>
+        <div class="chart-wrap"><canvas id="modera-dow-price-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modera-dist-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Today's Price Range</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">All available units sorted by price — pink = B06 corner ✦, teal = B06</div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
-      <div class="chart-wrap-tall"><canvas id="modera-chart"></canvas></div>
+      <div class="chart-wrap"><canvas id="modera-dist-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="modera-top-plans-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Top Plans — B06</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Dream plan — pink = B06 corner ✦, teal = B06 non-corner</div>
+    <div id="modera-top-plans-grid" style="display:grid;grid-template-columns:1fr;gap:24px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div id="modera-top-plans-full-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Full Timeline</div>
+        <div class="chart-wrap"><canvas id="modera-top-plans-chart"></canvas></div>
+      </div>
+      <div id="modera-top-plans-recent-wrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
+        <div class="chart-wrap"><canvas id="modera-top-plans-chart-recent"></canvas></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3167,18 +3254,66 @@ function renderModeraDashboard() {
   grid.style.display = "";
   const latest = moderaSnapshots[moderaSnapshots.length - 1];
   const prev = moderaSnapshots.length > 1 ? moderaSnapshots[moderaSnapshots.length - 2] : null;
-  const units = Object.values(latest.units);
-  const prevUnits = prev ? Object.values(prev.units) : [];
-  const goneUnits = prev ? Object.entries(prev.units).filter(([c]) => !latest.units[c]) : [];
-  const newUnits  = prev ? Object.entries(latest.units).filter(([c]) => !prev.units[c]) : [];
-  const avgPrice = units.length ? Math.round(units.reduce((s,u) => s+u.minRent, 0) / units.length) : 0;
-  const minPrice = units.length ? Math.min(...units.map(u => u.minRent)) : 0;
-  grid.innerHTML = [
-    { label:"Available", value: units.length, sub: prev ? (units.length > prevUnits.length ? "▲ " : units.length < prevUnits.length ? "▼ " : "") + Math.abs(units.length - prevUnits.length) + " from yesterday" : "2BR/2BA units" },
-    { label:"Avg Price", value: avgPrice ? "$"+avgPrice.toLocaleString() : "—", sub: "2BR/2BA" },
-    { label:"Lowest Price", value: minPrice ? "$"+minPrice.toLocaleString() : "—", sub: "available now" },
-    { label:"Units Leased", value: goneUnits.length, sub: goneUnits.length ? goneUnits.map(([c,u])=>`#${c} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data", valueClass: goneUnits.length ? "dash-up" : "" },
-  ].map(d => `<div class="dash-card"><div class="dash-card-label">${d.label}</div><div class="dash-card-value ${d.valueClass||""}">${d.value}</div><div class="dash-card-sub">${d.sub}</div></div>`).join("");
+  const latestUnits = Object.entries(latest.units);
+  const prevUnits = prev ? Object.entries(prev.units) : [];
+  const totalNow = latestUnits.length;
+  const totalPrev = prevUnits.length;
+  const totalDiff = totalNow - totalPrev;
+  const newUnits = prev ? latestUnits.filter(([c]) => !prev.units[c]) : [];
+  const goneUnits = prev ? prevUnits.filter(([c]) => !latest.units[c]) : [];
+  const cheapest = latestUnits.reduce((best, [code, u]) =>
+    !best || u.minRent < best.minRent ? {...u, code} : best, null);
+  const bestPsf = latestUnits.reduce((best, [code, u]) => {
+    const psf = u.sqft ? u.minRent / u.sqft : Infinity;
+    return !best || psf < best.psf ? {...u, code, psf} : best;
+  }, null);
+  const avgPrice = latestUnits.length ? Math.round(latestUnits.reduce((s,[,u]) => s + u.minRent, 0) / latestUnits.length) : 0;
+  const avgPricePrev = prev && prevUnits.length ? Math.round(prevUnits.reduce((s,[,u]) => s + u.minRent, 0) / prevUnits.length) : null;
+  const avgDiff = avgPricePrev != null ? avgPrice - avgPricePrev : null;
+  const cards = [
+    {
+      label: "Available Today",
+      value: totalNow,
+      sub: prev ? `${totalDiff > 0 ? "+" : ""}${totalDiff} from yesterday` : "No prior data",
+      valueClass: totalDiff < 0 ? "dash-up" : totalDiff > 0 ? "dash-down" : ""
+    },
+    {
+      label: "New Listings",
+      value: newUnits.length,
+      sub: newUnits.length ? newUnits.map(([code, u]) => `#${code} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data",
+      valueClass: newUnits.length ? "dash-down" : ""
+    },
+    {
+      label: "Units Leased",
+      value: goneUnits.length,
+      sub: goneUnits.length ? goneUnits.map(([code, u]) => `#${code} (${u.plan})`).join(", ") : prev ? "None today" : "No prior data",
+      valueClass: goneUnits.length ? "dash-up" : ""
+    },
+    {
+      label: "Avg Price Today",
+      value: avgPrice ? `$${avgPrice.toLocaleString()}` : "—",
+      sub: avgDiff != null ? `${avgDiff > 0 ? "↑" : "↓"} $${Math.abs(avgDiff)} from yesterday` : "No prior data",
+      valueClass: avgDiff > 0 ? "dash-up" : avgDiff < 0 ? "dash-down" : ""
+    },
+    {
+      label: "Cheapest Unit",
+      value: cheapest ? `$${cheapest.minRent.toLocaleString()}` : "—",
+      sub: cheapest ? `#${cheapest.code} · ${cheapest.plan} · ${cheapest.sqft} sqft` : "",
+      valueClass: "dash-down"
+    },
+    {
+      label: "Best $/sqft",
+      value: bestPsf ? `$${bestPsf.psf.toFixed(2)}` : "—",
+      sub: bestPsf ? `#${bestPsf.code} · ${bestPsf.plan} · ${bestPsf.sqft} sqft` : "",
+      valueClass: "dash-down"
+    },
+  ];
+  grid.innerHTML = cards.map(c => `
+    <div class="dash-card">
+      <div class="dash-card-label">${c.label}</div>
+      <div class="dash-card-value ${c.valueClass || ""}">${c.value}</div>
+      <div class="dash-card-sub">${c.sub}</div>
+    </div>`).join("");
 }
 
 function applyModeraFilters() {
@@ -3334,37 +3469,185 @@ function renderModeraTable() {
   html += '</tbody></table>';
   wrap.innerHTML = html;
   renderLeasedSection(moderaSnapshots, "modera-leased-section", moderaPrefBadge);
-  renderModeraPriceChart();
+  renderAllModeraCharts();
 }
 
-let moderaChartInstance = null;
-function renderModeraPriceChart() {
-  const section = document.getElementById("modera-chart-section");
-  if (!section || moderaSnapshots.length < 2) { if (section) section.style.display = "none"; return; }
-  section.style.display = "";
-  const codes = [...new Set(moderaSnapshots.flatMap(s => Object.keys(s.units)))].sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
+function getModeraScaledSnapshots() {
+  if (moderaSnapshots.length < 30) return moderaSnapshots;
+  const byWeek = {};
+  moderaSnapshots.forEach(s => {
+    const d = new Date(s.date);
+    const week = Math.floor((d - new Date(moderaSnapshots[0].date)) / (7 * 86400000));
+    byWeek[week] = s;
+  });
+  const scaled = Object.values(byWeek);
+  if (scaled[scaled.length-1] !== moderaSnapshots[moderaSnapshots.length-1]) scaled.push(moderaSnapshots[moderaSnapshots.length-1]);
+  return scaled;
+}
+
+function applySplitModera(idPrefix, minSnaps) {
+  const showSplit = moderaSnapshots.length >= minSnaps;
+  const rw = document.getElementById(idPrefix+"-recent-wrap");
+  const fl = document.getElementById(idPrefix+"-full-label");
+  if (showSplit) { rw.style.display=""; fl.textContent=moderaSnapshots.length>=30?"Full Timeline (weekly)":"Full Timeline"; }
+  else { rw.style.display="none"; fl.textContent="Full Timeline"; }
+  return showSplit;
+}
+
+let moderaChartInstance = null, moderaChartRecentInstance = null;
+let moderaInventoryInstance = null, moderaInventoryRecentInstance = null;
+let moderaMinPriceInstance = null, moderaMinPriceRecentInstance = null;
+let moderaSupplyPriceInstance = null, moderaSupplyPriceRecentInstance = null;
+let moderaDowInvInstance = null, moderaDowPriceInstance = null;
+let moderaDistInstance = null;
+let moderaTopPlansInstance = null, moderaTopPlansRecentInstance = null;
+
+function makeModeraPriceConfig(snaps, codes) {
   const MCOLORS = ["#FF0090","#0ABAB5","#9B84B8","#f4a261","#2a9d8f","#e76f51","#457b9d","#a8dadc"];
   const datasets = codes.map((code, i) => {
     const plan = moderaSnapshots.flatMap(s => s.units[code] ? [s.units[code].plan] : [])[0] || "";
     const isCorner = String(code).slice(-2) === "01";
     const isDream = plan === MODERA_DREAM_PLAN && isCorner;
     const color = MCOLORS[i % MCOLORS.length];
-    return { label:"#"+code+" "+plan+(isDream?" ✦":""), data:moderaSnapshots.map(s=>s.units[code]?s.units[code].minRent:null), borderColor:color, backgroundColor:color+"22", tension:0.3, spanGaps:true, pointRadius:4, pointHoverRadius:6, borderWidth:isDream?3:2 };
+    return { label:"#"+code+" "+plan+(isDream?" ✦":""), data:snaps.map(s=>s.units[code]?s.units[code].minRent:null), borderColor:color, backgroundColor:color+"22", tension:0.3, spanGaps:true, pointRadius:4, pointHoverRadius:6, borderWidth:isDream?3:2 };
   });
+  return { type:"line", data:{ labels:snaps.map(s=>s.date), datasets }, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false}, plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} }, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } };
+}
+
+function makeModeraTopPlansConfig(snaps, codes) {
+  const datasets = codes.map(code => {
+    const plan = moderaSnapshots.flatMap(s=>s.units[code]?[s.units[code].plan]:[])[0]||"";
+    const isCorner = String(code).slice(-2) === "01";
+    const isDream = plan === MODERA_DREAM_PLAN && isCorner;
+    const color = isDream ? "#FF0090" : plan === MODERA_DREAM_PLAN ? "#0ABAB5" : "#9B84B8";
+    return { label:"#"+code+" "+plan+(isDream?" ✦":""), data:snaps.map(s=>s.units[code]?s.units[code].minRent:null), borderColor:color, backgroundColor:color+"22", tension:0.3, spanGaps:true, pointRadius:4, pointHoverRadius:6, borderWidth:isDream?3:2 };
+  });
+  return { type:"line", data:{ labels:snaps.map(s=>s.date), datasets }, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false}, plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} }, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } };
+}
+
+function renderAllModeraCharts() {
+  renderModeraPriceChart();
+  renderModeraInventoryChart();
+  renderModeraMinPriceChart();
+  renderModeraSupplyPriceChart();
+  renderModeraDowChart();
+  renderModeraDistChart();
+  renderModeraTopPlansChart();
+}
+
+function renderModeraPriceChart() {
+  const section = document.getElementById("modera-chart-section");
+  if (!section || moderaSnapshots.length < 2) { if (section) section.style.display = "none"; return; }
+  section.style.display = "";
+  const showSplit = applySplitModera("modera-chart", 15);
+  const codes = [...new Set(moderaSnapshots.flatMap(s => Object.keys(s.units)))].sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
   if (moderaChartInstance) moderaChartInstance.destroy();
-  moderaChartInstance = new Chart(document.getElementById("modera-chart").getContext("2d"), {
-    type:"line", data:{ labels:moderaSnapshots.map(s=>s.date), datasets },
-    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false},
-      plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} },
-      scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} }
-    }
+  moderaChartInstance = new Chart(document.getElementById("modera-chart").getContext("2d"), makeModeraPriceConfig(getModeraScaledSnapshots(), codes));
+  if (showSplit) {
+    if (moderaChartRecentInstance) moderaChartRecentInstance.destroy();
+    moderaChartRecentInstance = new Chart(document.getElementById("modera-chart-recent").getContext("2d"), makeModeraPriceConfig(moderaSnapshots.slice(-10), codes));
+  } else { if (moderaChartRecentInstance) { moderaChartRecentInstance.destroy(); moderaChartRecentInstance=null; } }
+}
+
+function renderModeraInventoryChart() {
+  const section = document.getElementById("modera-inventory-section");
+  if (!section) return;
+  if (moderaSnapshots.length < 2) { section.style.display="none"; return; }
+  section.style.display = "";
+  const showSplit = applySplitModera("modera-inventory", 15);
+  if (moderaInventoryInstance) moderaInventoryInstance.destroy();
+  moderaInventoryInstance = new Chart(document.getElementById("modera-inventory-chart").getContext("2d"), makeInventoryChartConfig(getModeraScaledSnapshots()));
+  if (showSplit) {
+    if (moderaInventoryRecentInstance) moderaInventoryRecentInstance.destroy();
+    moderaInventoryRecentInstance = new Chart(document.getElementById("modera-inventory-chart-recent").getContext("2d"), makeInventoryChartConfig(moderaSnapshots.slice(-10)));
+  } else { if (moderaInventoryRecentInstance) { moderaInventoryRecentInstance.destroy(); moderaInventoryRecentInstance=null; } }
+}
+
+function renderModeraMinPriceChart() {
+  const section = document.getElementById("modera-minprice-section");
+  if (!section) return;
+  if (moderaSnapshots.length < 2) { section.style.display="none"; return; }
+  section.style.display = "";
+  const showSplit = applySplitModera("modera-minprice", 15);
+  if (moderaMinPriceInstance) moderaMinPriceInstance.destroy();
+  moderaMinPriceInstance = new Chart(document.getElementById("modera-minprice-chart").getContext("2d"), makeMinPriceChartConfig(getModeraScaledSnapshots()));
+  if (showSplit) {
+    if (moderaMinPriceRecentInstance) moderaMinPriceRecentInstance.destroy();
+    moderaMinPriceRecentInstance = new Chart(document.getElementById("modera-minprice-chart-recent").getContext("2d"), makeMinPriceChartConfig(moderaSnapshots.slice(-10)));
+  } else { if (moderaMinPriceRecentInstance) { moderaMinPriceRecentInstance.destroy(); moderaMinPriceRecentInstance=null; } }
+}
+
+function renderModeraSupplyPriceChart() {
+  const section = document.getElementById("modera-supply-price-section");
+  if (!section) return;
+  if (moderaSnapshots.length < 5) { section.style.display="none"; return; }
+  section.style.display = "";
+  const showSplit = applySplitModera("modera-supply-price", 15);
+  if (moderaSupplyPriceInstance) moderaSupplyPriceInstance.destroy();
+  moderaSupplyPriceInstance = new Chart(document.getElementById("modera-supply-price-chart").getContext("2d"), makeSupplyPriceChartConfig(getModeraScaledSnapshots()));
+  if (showSplit) {
+    if (moderaSupplyPriceRecentInstance) moderaSupplyPriceRecentInstance.destroy();
+    moderaSupplyPriceRecentInstance = new Chart(document.getElementById("modera-supply-price-chart-recent").getContext("2d"), makeSupplyPriceChartConfig(moderaSnapshots.slice(-10)));
+  } else { if (moderaSupplyPriceRecentInstance) { moderaSupplyPriceRecentInstance.destroy(); moderaSupplyPriceRecentInstance=null; } }
+}
+
+function renderModeraDowChart() {
+  const section = document.getElementById("modera-dow-section");
+  if (!section) return;
+  if (moderaSnapshots.length < 7) { section.style.display="none"; return; }
+  section.style.display = "";
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const invByDay=[[], [], [], [], [], [], []], priceByDay=[[], [], [], [], [], [], []];
+  moderaSnapshots.forEach(s => {
+    const dow = new Date(s.date).getDay();
+    invByDay[dow].push(Object.keys(s.units).length);
+    const rents = Object.values(s.units).map(u=>u.minRent);
+    if (rents.length) priceByDay[dow].push(Math.round(rents.reduce((a,b)=>a+b,0)/rents.length));
   });
+  const avgInv = invByDay.map(arr=>arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10:null);
+  const avgPrice = priceByDay.map(arr=>arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null);
+  if (moderaDowInvInstance) moderaDowInvInstance.destroy();
+  moderaDowInvInstance = new Chart(document.getElementById("modera-dow-inv-chart").getContext("2d"), { type:"bar", data:{ labels:days, datasets:[{label:"Avg Units",data:avgInv,backgroundColor:"#0ABAB544",borderColor:"#0ABAB5",borderWidth:2,borderRadius:6}] }, options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" "+c.parsed.y+" avg units"}}}, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:11}}}, y:{beginAtZero:false,afterFit(s){s.width=40;},ticks:{font:{family:CHART_FONT.family,size:10},stepSize:1,maxTicksLimit:6}} } } });
+  if (moderaDowPriceInstance) moderaDowPriceInstance.destroy();
+  moderaDowPriceInstance = new Chart(document.getElementById("modera-dow-price-chart").getContext("2d"), { type:"bar", data:{ labels:days, datasets:[{label:"Avg Price",data:avgPrice,backgroundColor:"#FF009044",borderColor:"#FF0090",borderWidth:2,borderRadius:6}] }, options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" avg $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}}}, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:11}}}, y:{beginAtZero:false,afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } });
+}
+
+function renderModeraDistChart() {
+  const section = document.getElementById("modera-dist-section");
+  if (!section) return;
+  if (!moderaSnapshots.length) { section.style.display="none"; return; }
+  section.style.display = "";
+  const latest = moderaSnapshots[moderaSnapshots.length-1];
+  const units = Object.entries(latest.units).map(function(e) {
+    const isCorner = String(e[0]).slice(-2) === "01";
+    const isDream = e[1].plan === MODERA_DREAM_PLAN && isCorner;
+    return {label:"#"+e[0]+" "+e[1].plan, price:e[1].minRent, plan:e[1].plan, isDream};
+  }).sort(function(a,b){return a.price-b.price;});
+  const bgColors = units.map(u=>u.isDream?"#FF009066":u.plan===MODERA_DREAM_PLAN?"#0ABAB566":"#9B84B844");
+  const bdColors = units.map(u=>u.isDream?"#FF0090":u.plan===MODERA_DREAM_PLAN?"#0ABAB5":"#9B84B8");
+  if (moderaDistInstance) moderaDistInstance.destroy();
+  moderaDistInstance = new Chart(document.getElementById("modera-dist-chart").getContext("2d"), { type:"bar", data:{ labels:units.map(u=>u.label), datasets:[{label:"Price",data:units.map(u=>u.price),backgroundColor:bgColors,borderColor:bdColors,borderWidth:2,borderRadius:8}] }, options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>" $"+c.parsed.y.toLocaleString()}}}, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:11}}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } });
+}
+
+function renderModeraTopPlansChart() {
+  const section = document.getElementById("modera-top-plans-section");
+  if (!section) return;
+  const topCodes = [...new Set(moderaSnapshots.flatMap(s=>Object.entries(s.units).filter(function(e){return MODERA_TOP_PLANS.includes(e[1].plan);}).map(function(e){return e[0];})))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  if (!topCodes.length) { section.style.display="none"; return; }
+  section.style.display = "";
+  const showSplit = applySplitModera("modera-top-plans", 15);
+  if (moderaTopPlansInstance) moderaTopPlansInstance.destroy();
+  moderaTopPlansInstance = new Chart(document.getElementById("modera-top-plans-chart").getContext("2d"), makeModeraTopPlansConfig(getModeraScaledSnapshots(), topCodes));
+  if (showSplit) {
+    if (moderaTopPlansRecentInstance) moderaTopPlansRecentInstance.destroy();
+    moderaTopPlansRecentInstance = new Chart(document.getElementById("modera-top-plans-chart-recent").getContext("2d"), makeModeraTopPlansConfig(moderaSnapshots.slice(-10), topCodes));
+  } else { if (moderaTopPlansRecentInstance) { moderaTopPlansRecentInstance.destroy(); moderaTopPlansRecentInstance=null; } }
 }
 
 // ── SAVINGS DASHBOARD ─────────────────────────────────────────
 const SAV_WEEKLY = 1611.55;
 const SAV_MONTHLY_INCOME = SAV_WEEKLY * 52 / 12;
-const SAV_CURRENT_SAVINGS = 12000;
+const SAV_CURRENT_SAVINGS = 14000;
 const SAV_GOAL = 20000;
 const SAV_MOVE_OUT = new Date(2026, 7, 1); // Aug 1 target
 
