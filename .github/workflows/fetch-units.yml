@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install playwright playwright-stealth
+          pip install playwright playwright-stealth curl_cffi
           playwright install chromium
           playwright install-deps chromium
 

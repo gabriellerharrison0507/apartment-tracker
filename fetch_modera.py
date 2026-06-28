@@ -1,10 +1,10 @@
 import json
 import os
+import re
 import time
 import urllib.request
 from datetime import datetime
-from playwright.sync_api import sync_playwright
-from playwright_stealth import Stealth
+from curl_cffi import requests as cf_requests
 
 SNAPSHOTS_FILE = "data/modera-snapshots.json"
 CONFIG_FILE = "gist_config.json"
@@ -55,45 +55,33 @@ def push_to_gist(snapshots, token, gist_id=None):
 
 def fetch_modera_units():
     """
-    Loads the Modera floor plans page via Playwright, waits for Cloudflare to
-    resolve, then reads the embedded unitsDataDetails JS variable.
+    Fetches the Modera floor plans page using curl_cffi (Chrome TLS fingerprint)
+    to bypass Cloudflare, then parses the embedded unitsDataDetails JS variable.
     """
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800},
-            locale="en-US",
-        )
-        page = context.new_page()
-        Stealth().apply_stealth_sync(page)
-        page.goto(URL, wait_until="domcontentloaded", timeout=90000)
-        # Wait for Cloudflare challenge to resolve and unitsData to be populated
-        page.wait_for_function("typeof unitsData !== 'undefined'", timeout=40000)
-        page.wait_for_timeout(2000)
+    r = cf_requests.get(
+        URL,
+        impersonate="chrome131",
+        timeout=60,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
+    )
+    html = r.text
 
-        two_bed = page.evaluate("""() => {
-            const details = JSON.parse(unitsDataDetails);
-            const result = [];
-            for (const [fp_id, units] of Object.entries(details)) {
-                for (const u of units) {
-                    if (u.bedroom === 2 && u.bathroom === 2) {
-                        result.push({
-                            unit_number: u.unit_number,
-                            floorplan_name: u.floorplan_name,
-                            sqft: u.sqft || u.sqft_unit,
-                            available_on: u.available_on,
-                            min_rent: u.min_rent,
-                        });
-                    }
-                }
-            }
-            return result;
-        }""")
-        browser.close()
+    m = re.search(r"unitsDataDetails\s*=\s*'(.*?)'\s*;", html, re.DOTALL)
+    if not m:
+        raise ValueError("Could not find unitsDataDetails in page HTML")
+
+    raw = m.group(1).replace("\\'", "'").replace('\\"', '"')
+    details = json.loads(raw)
+
+    two_bed = []
+    for fp_id, units in details.items():
+        for u in units:
+            if u.get("bedroom") == 2 and u.get("bathroom") == 2:
+                two_bed.append(u)
 
     if not two_bed:
         raise ValueError("No 2BR/2BA units found in unitsDataDetails")
