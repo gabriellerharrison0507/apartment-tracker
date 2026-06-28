@@ -4,6 +4,7 @@ import time
 import urllib.request
 from datetime import datetime
 from playwright.sync_api import sync_playwright
+from playwright_stealth import Stealth
 
 SNAPSHOTS_FILE = "data/modera-snapshots.json"
 CONFIG_FILE = "gist_config.json"
@@ -68,7 +69,7 @@ def fetch_modera_units():
             locale="en-US",
         )
         page = context.new_page()
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        Stealth().apply_stealth_sync(page)
         page.goto(URL, wait_until="domcontentloaded", timeout=90000)
         # Wait for Cloudflare challenge to resolve and unitsData to be populated
         page.wait_for_function("typeof unitsData !== 'undefined'", timeout=40000)

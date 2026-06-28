@@ -31,5 +31,38 @@
         "floor": 7
       }
     }
+  },
+  {
+    "date": "6/27/2026",
+    "units": {
+      "509": {
+        "plan": "B05",
+        "sqft": 1419,
+        "availDate": "2025-07-01",
+        "minRent": 3849,
+        "floor": 5
+      },
+      "912": {
+        "plan": "B04",
+        "sqft": 1350,
+        "availDate": "2026-08-08",
+        "minRent": 4261,
+        "floor": 9
+      },
+      "625": {
+        "plan": "B01",
+        "sqft": 981,
+        "availDate": "2026-08-27",
+        "minRent": 3205,
+        "floor": 6
+      },
+      "741": {
+        "plan": "B03",
+        "sqft": 1343,
+        "availDate": "2026-07-07",
+        "minRent": 3827,
+        "floor": 7
+      }
+    }
   }
 ]
