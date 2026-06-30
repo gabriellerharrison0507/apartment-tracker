@@ -8,7 +8,7 @@ from curl_cffi import requests as cf_requests
 
 SNAPSHOTS_FILE = "data/modera-snapshots.json"
 CONFIG_FILE = "gist_config.json"
-URL = "https://www.moderawestwashpark.com/denver/modera-west-wash-park/conventional/"
+URL = "https://www.moderawestwashpark.com/Apartments/module/property_floorplans/"
 GIST_FILENAME = "modera-snapshots.json"
 
 
@@ -92,7 +92,7 @@ def fetch_modera_units():
     for u in two_bed:
         code = str(u["unit_number"])
         plan = u["floorplan_name"] or ""
-        sqft = int(u["sqft"]) if u["sqft"] else 0
+        sqft = int(u["sqft_unit"] or u["sqft"] or 0)
         avail_raw = u.get("available_on") or ""
         # Convert "MM/DD/YYYY" → "YYYY-MM-DD"
         try:
