@@ -4537,13 +4537,13 @@
         "plan": "A3",
         "sqft": 730.0,
         "availDate": "2026-04-07",
-        "minRent": 1855.0
+        "minRent": 1840.0
       },
       "220": {
         "plan": "A3",
         "sqft": 730.0,
         "availDate": "2026-07-21",
-        "minRent": 1855.0
+        "minRent": 1840.0
       },
       "520": {
         "plan": "A3",
@@ -4555,7 +4555,7 @@
         "plan": "A6",
         "sqft": 781.0,
         "availDate": "2026-06-19",
-        "minRent": 1925.0
+        "minRent": 1910.0
       }
     }
   }

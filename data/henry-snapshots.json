@@ -5275,19 +5275,19 @@
         "plan": "A2",
         "sqft": 710,
         "availDate": "2026-06-02",
-        "minRent": 2107
+        "minRent": 2088
       },
       "770": {
         "plan": "A2",
         "sqft": 710,
         "availDate": "2026-06-12",
-        "minRent": 2131
+        "minRent": 2125
       },
       "684": {
         "plan": "A2",
         "sqft": 710,
         "availDate": "2026-06-21",
-        "minRent": 2212
+        "minRent": 2205
       },
       "402": {
         "plan": "A9",
@@ -5304,7 +5304,7 @@
       "676": {
         "plan": "A2",
         "sqft": 710,
-        "availDate": "2026-07-06",
+        "availDate": "2026-07-02",
         "minRent": 2050
       },
       "427": {
@@ -5348,6 +5348,12 @@
         "sqft": 664,
         "availDate": "2026-08-01",
         "minRent": 2130
+      },
+      "509": {
+        "plan": "A1",
+        "sqft": 664,
+        "availDate": "2026-08-07",
+        "minRent": 2283
       },
       "359": {
         "plan": "A5",
