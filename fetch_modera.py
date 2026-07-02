@@ -4,11 +4,11 @@ import re
 import time
 import urllib.request
 from datetime import datetime
-from curl_cffi import requests as cf_requests
+import cloudscraper
 
 SNAPSHOTS_FILE = "data/modera-snapshots.json"
 CONFIG_FILE = "gist_config.json"
-URL = "https://www.moderawestwashpark.com/Apartments/module/property_floorplans/"
+URL = "https://www.moderawestwashpark.com/denver/modera-west-wash-park/conventional/"
 GIST_FILENAME = "modera-snapshots.json"
 
 
@@ -55,19 +55,13 @@ def push_to_gist(snapshots, token, gist_id=None):
 
 def fetch_modera_units():
     """
-    Fetches the Modera floor plans page using curl_cffi (Chrome TLS fingerprint)
-    to bypass Cloudflare, then parses the embedded unitsDataDetails JS variable.
+    Fetches the Modera floor plans page using cloudscraper (handles Cloudflare
+    bot management), then parses the embedded unitsDataDetails JS variable.
     """
-    r = cf_requests.get(
-        URL,
-        impersonate="chrome131",
-        timeout=60,
-        headers={
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-        },
+    scraper = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "windows", "mobile": False}
     )
+    r = scraper.get(URL, timeout=60)
     html = r.text
 
     m = re.search(r"unitsDataDetails\s*=\s*'(.*?)'\s*;", html, re.DOTALL)
