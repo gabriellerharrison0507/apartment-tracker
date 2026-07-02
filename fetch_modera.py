@@ -1,14 +1,13 @@
 import json
 import os
-import re
+import gzip
 import time
 import urllib.request
 from datetime import datetime
-import cloudscraper
 
 SNAPSHOTS_FILE = "data/modera-snapshots.json"
 CONFIG_FILE = "gist_config.json"
-URL = "https://www.moderawestwashpark.com/denver/modera-west-wash-park/conventional/"
+SIGHTMAP_URL = "https://sightmap.com/app/api/v1/6m9pzr4mwk1/sightmaps/13633"
 GIST_FILENAME = "modera-snapshots.json"
 
 
@@ -55,49 +54,63 @@ def push_to_gist(snapshots, token, gist_id=None):
 
 def fetch_modera_units():
     """
-    Fetches the Modera floor plans page using cloudscraper (handles Cloudflare
-    bot management), then parses the embedded unitsDataDetails JS variable.
+    Fetches Modera West Wash Park 2BR/2BA unit data via the SightMap API.
+    No Cloudflare protection — works from any IP including CI.
     """
-    scraper = cloudscraper.create_scraper(
-        browser={"browser": "chrome", "platform": "windows", "mobile": False}
-    )
-    r = scraper.get(URL, timeout=60)
-    html = r.text
+    req = urllib.request.Request(SIGHTMAP_URL)
+    req.add_header("User-Agent", "Mozilla/5.0")
+    req.add_header("Accept", "application/json")
+    req.add_header("Accept-Encoding", "gzip, deflate")
 
-    m = re.search(r"unitsDataDetails\s*=\s*'(.*?)'\s*;", html, re.DOTALL)
-    if not m:
-        raise ValueError("Could not find unitsDataDetails in page HTML")
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        raw = resp.read()
 
-    raw = m.group(1).replace("\\'", "'").replace('\\"', '"')
-    details = json.loads(raw)
+    try:
+        payload = json.loads(gzip.decompress(raw))
+    except Exception:
+        payload = json.loads(raw)
 
+    data = payload["data"]
+
+    # Build floor plan map: id -> {plan, bedroom_count, bathroom_count}
+    fp_map = {}
+    for fp in data["floor_plans"]:
+        fp_map[fp["id"]] = {
+            "plan": fp["filter_label"],
+            "bedrooms": fp.get("bedroom_count", 0),
+            "bathrooms": fp.get("bathroom_count", 0),
+        }
+
+    # Build floor map: id -> floor number (int)
+    floor_map = {}
+    for fl in data["floors"]:
+        try:
+            floor_map[fl["id"]] = int(fl["filter_short_label"])
+        except (ValueError, KeyError):
+            floor_map[fl["id"]] = 0
+
+    # Filter 2BR/2BA units
     two_bed = []
-    for fp_id, units in details.items():
-        for u in units:
-            if u.get("bedroom") == 2 and u.get("bathroom") == 2:
-                two_bed.append(u)
+    for u in data["units"]:
+        fp = fp_map.get(u["floor_plan_id"], {})
+        if fp.get("bedrooms") == 2 and fp.get("bathrooms") == 2:
+            two_bed.append((u, fp))
 
     if not two_bed:
-        raise ValueError("No 2BR/2BA units found in unitsDataDetails")
+        raise ValueError("No 2BR/2BA units found in SightMap data")
 
     today = datetime.now().strftime("%-m/%-d/%Y")
     snapshot = {"date": today, "units": {}}
 
-    for u in two_bed:
+    for u, fp in two_bed:
         code = str(u["unit_number"])
-        plan = u["floorplan_name"] or ""
-        sqft = int(u["sqft_unit"] or u["sqft"] or 0)
-        avail_raw = u.get("available_on") or ""
-        # Convert "MM/DD/YYYY" → "YYYY-MM-DD"
-        try:
-            avail = datetime.strptime(avail_raw, "%m/%d/%Y").strftime("%Y-%m-%d") if avail_raw else ""
-        except ValueError:
-            avail = ""
-        rent = int(float(u["min_rent"])) if u["min_rent"] else 0
-        floor = int(code) // 100
+        sqft = int(u.get("area") or 0)
+        avail = u.get("available_on") or ""
+        rent = int(u.get("price") or 0)
+        floor = floor_map.get(u["floor_id"], int(code) // 100 if code.isdigit() else 0)
 
         snapshot["units"][code] = {
-            "plan": plan,
+            "plan": fp["plan"],
             "sqft": sqft,
             "availDate": avail,
             "minRent": rent,
