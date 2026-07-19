@@ -2906,6 +2906,9 @@ function renderHenryTable() {
     const isHighFloor = r.floor >= 5;
     const isTooHigh = r.minRent > HENRY_PRICE_CAP;
     const hasNoBalcony = HENRY_NO_BALCONY.includes(r.plan);
+    const isTooLate    = r.availDateRaw && r.availDateRaw > "2026-10-15";
+    const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
+    const isLongLease  = r.leaseTerm >= 14;
     const isDream   = !isTooLate && isIdealLease && isHighFloor && !hasNoBalcony;
     const isTopPick = !isDream && isHighFloor && !hasNoBalcony;
 
@@ -2920,9 +2923,6 @@ function renderHenryTable() {
         prefBadge += `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
       }
     }
-    const isTooLate    = r.availDateRaw && r.availDateRaw > "2026-10-15";
-    const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
-    const isLongLease  = r.leaseTerm >= 14;
     const dateBadge  = isTooLate    ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "";
     const leaseBadge = (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
                      + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
