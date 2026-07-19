@@ -2031,7 +2031,8 @@ function renderUnitTable() {
     availDateFmt: u.availDate ? new Date(u.availDate + "T12:00:00").toLocaleDateString("en-US", {month:"short", day:"numeric"}) : "—",
     minRent: u.minRent,
     prevRent: prev?.units[code]?.minRent ?? null,
-    daysListed: daysListedMap[code] || 1
+    daysListed: daysListedMap[code] || 1,
+    leaseTerm: u.leaseTerm || 0,
   }));
 
   // Populate floor dropdown
@@ -2055,6 +2056,7 @@ function renderUnitTable() {
     else if (unitSortCol === "sqft") cmp = a.sqft - b.sqft;
     else if (unitSortCol === "floor") cmp = a.floor - b.floor;
     else if (unitSortCol === "days") cmp = a.daysListed - b.daysListed;
+    else if (unitSortCol === "lease") cmp = a.leaseTerm - b.leaseTerm;
     else cmp = a.plan !== b.plan ? a.plan.localeCompare(b.plan, undefined, {numeric:true}) : a.code.localeCompare(b.code, undefined, {numeric:true});
     return unitSortDir === "asc" ? cmp : -cmp;
   });
@@ -2071,6 +2073,7 @@ function renderUnitTable() {
     <th style="${thStyle}" onclick="setSortCol('sqft')">Sq Ft${sortArrow('sqft')}</th>
     <th style="${thStyle}" onclick="setSortCol('floor')">Unit${sortArrow('floor')}</th>
     <th style="${thStyle}" onclick="setSortCol('avail')">Avail Date${sortArrow('avail')}</th>
+    <th style="${thStyle}" onclick="setSortCol('lease')">Lease${sortArrow('lease')}</th>
     <th style="${thStyle}" onclick="setSortCol('days')">Days Listed${sortArrow('days')}</th>
     <th class="date-col" style="${thStyle}" onclick="setSortCol('price')">Today's Price${sortArrow('price')}<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
   </tr></thead><tbody>`;
@@ -2105,8 +2108,12 @@ function renderUnitTable() {
     else if (isGood)     prefBadge = `<span class="pref-badge" style="font-size:10px;background:#f0f0f0;color:#666;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">Island</span>`;
     else if (isHighOnly) prefBadge = `<span class="pref-badge" style="font-size:10px;background:#e8f0ff;color:#4a6fa5;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">↑ High Floor</span>`;
 
-    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-08-01";
-    const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
+    const isTooLate    = r.availDateRaw && r.availDateRaw > "2026-10-15";
+    const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
+    const isLongLease  = r.leaseTerm >= 14;
+    const dateBadge  = isTooLate    ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "";
+    const leaseBadge = (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
+                     + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
 
     const rowBg = isDream ? "background:#fff0f8;" : isWatched ? "background:#fff8fb;" : "";
     html += `<tr style="${rowBg}">
@@ -2118,6 +2125,7 @@ function renderUnitTable() {
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
+      <td style="color:var(--muted);">${r.leaseTerm ? r.leaseTerm+" mo" : "—"}${leaseBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
       <td class="date-col"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;">${r.minRent > 1850 ? `<span style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;justify-self:start;margin-left:6px;">Too High</span>` : `<span></span>`}<span><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</span><span></span></div></td>
     </tr>`;
@@ -2844,7 +2852,8 @@ function renderHenryTable() {
     availDateFmt: u.availDate ? new Date(u.availDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}) : "—",
     minRent: u.minRent,
     prevRent: prev?.units[code]?.minRent ?? null,
-    daysListed: daysListedMap[code] || 1
+    daysListed: daysListedMap[code] || 1,
+    leaseTerm: u.leaseTerm || 0,
   }));
 
   const allFloors = [...new Set(rows.map(r=>r.floor))].sort((a,b)=>a-b);
@@ -2865,6 +2874,7 @@ function renderHenryTable() {
     else if (henrySortCol==="sqft") cmp=a.sqft-b.sqft;
     else if (henrySortCol==="floor") cmp=a.floor-b.floor;
     else if (henrySortCol==="days") cmp=a.daysListed-b.daysListed;
+    else if (henrySortCol==="lease") cmp=a.leaseTerm-b.leaseTerm;
     else cmp=a.plan!==b.plan?a.plan.localeCompare(b.plan,undefined,{numeric:true}):a.code.localeCompare(b.code,undefined,{numeric:true});
     return henrySortDir==="asc"?cmp:-cmp;
   });
@@ -2878,6 +2888,7 @@ function renderHenryTable() {
     <th style="${thS}" onclick="setHenrySortCol('sqft')">Sq Ft${henrySortArrow('sqft')}</th>
     <th style="${thS}" onclick="setHenrySortCol('floor')">Unit${henrySortArrow('floor')}</th>
     <th style="${thS}" onclick="setHenrySortCol('avail')">Avail Date${henrySortArrow('avail')}</th>
+    <th style="${thS}" onclick="setHenrySortCol('lease')">Lease${henrySortArrow('lease')}</th>
     <th style="${thS}" onclick="setHenrySortCol('days')">Days Listed${henrySortArrow('days')}</th>
     <th class="date-col" style="${thS}" onclick="setHenrySortCol('price')">Today's Price${henrySortArrow('price')}<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
   </tr></thead><tbody>`;
@@ -2910,8 +2921,12 @@ function renderHenryTable() {
         prefBadge += `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
       }
     }
-    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-08-01";
-    const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
+    const isTooLate    = r.availDateRaw && r.availDateRaw > "2026-10-15";
+    const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
+    const isLongLease  = r.leaseTerm >= 14;
+    const dateBadge  = isTooLate    ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "";
+    const leaseBadge = (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
+                     + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
     const rowBg = isDream ? "background:#fff0f8;" : hasNoBalcony ? "background:#fff8f8;" : isWatched ? "background:#fff8fb;" : "";
 
     html += `<tr style="${rowBg}">
@@ -2923,6 +2938,7 @@ function renderHenryTable() {
       <td style="color:var(--muted);">${r.sqft} sqft</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
+      <td style="color:var(--muted);">${r.leaseTerm ? r.leaseTerm+" mo" : "—"}${leaseBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
       <td class="date-col"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;">${isTooHigh ? `<span style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;justify-self:start;margin-left:6px;">Too High</span>` : `<span></span>`}<span><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</span><span></span></div></td>
     </tr>`;

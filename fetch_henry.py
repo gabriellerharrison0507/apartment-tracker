@@ -126,11 +126,13 @@ def fetch_henry_units():
         avail_raw = u.get("internalAvailableDate", "") or ""
         avail = avail_raw[:10] if avail_raw else ""  # "2026-06-01 00:00 -0600" -> "2026-06-01"
         rent = int(u.get("rent") or 0)
+        lease_term = int(u.get("minLeaseTermInMonth") or 0)
         snapshot["units"][code] = {
             "plan": plan,
             "sqft": sqft,
             "availDate": avail,
             "minRent": rent,
+            "leaseTerm": lease_term,
         }
 
     return snapshot
