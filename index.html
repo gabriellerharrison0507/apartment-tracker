@@ -882,6 +882,14 @@
   </div>
 
 
+  <div id="lyra-seasonality-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Avg Price by Month</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Monthly average of all 1BR asking prices</div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div class="chart-wrap"><canvas id="lyra-seasonality-chart"></canvas></div>
+    </div>
+  </div>
+
   <div id="unit-import-msg" style="font-size:13px;color:var(--muted);margin-top:8px;display:none;"></div>
 </div>
 
@@ -1039,6 +1047,14 @@
       </div>
     </div>
   </div>
+
+  <div id="henry-seasonality-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Avg Price by Month</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Monthly average of all 1BR asking prices</div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div class="chart-wrap"><canvas id="henry-seasonality-chart"></canvas></div>
+    </div>
+  </div>
 </div>
 
 <div class="unit-tracker" id="modera-tracker" style="display:none;padding-top:0;">
@@ -1176,6 +1192,14 @@
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.04em;">Last 10 Days</div>
         <div class="chart-wrap"><canvas id="modera-top-plans-chart-recent"></canvas></div>
       </div>
+    </div>
+  </div>
+
+  <div id="modera-seasonality-section" style="display:none;margin-top:32px;">
+    <h3 style="font-family:var(--serif);font-size:24px;margin-bottom:4px;">Avg Price by Month</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Monthly average of all 2BR/2BA asking prices</div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;">
+      <div class="chart-wrap"><canvas id="modera-seasonality-chart"></canvas></div>
     </div>
   </div>
 </div>
@@ -2307,12 +2331,41 @@ let dowPriceChartInstance = null;
 let distChartInstance = null;
 let a7ChartInstance = null;
 let a7ChartRecentInstance = null;
+let lyraSeasonalityInstance = null;
 
 function setChartMode(mode) {
   unitChartMode = mode;
   document.getElementById("chart-btn-min").className = "filter-btn" + (mode === "min" ? " active" : "");
   document.getElementById("chart-btn-avg").className = "filter-btn" + (mode === "avg" ? " active" : "");
   renderUnitChart();
+}
+
+function renderLyraSeasonalityChart() {
+  const section = document.getElementById("lyra-seasonality-section");
+  if (!section) return;
+  const byMonth = {};
+  for (const snap of unitSnapshots) {
+    const prices = Object.values(snap.units).map(u => u.minRent).filter(v => v > 0);
+    if (!prices.length) continue;
+    const parts = snap.date.split("/");
+    const key = parts[2] + "-" + String(parts[0]).padStart(2, "0");
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(prices.reduce((a, b) => a + b, 0) / prices.length);
+  }
+  const months = Object.keys(byMonth).sort();
+  if (months.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const labels = months.map(m => { const [y, mo] = m.split("-"); return MONTH_NAMES[parseInt(mo)-1] + " '" + y.slice(2); });
+  const data = months.map(m => Math.round(byMonth[m].reduce((a, b) => a + b, 0) / byMonth[m].length));
+  if (lyraSeasonalityInstance) lyraSeasonalityInstance.destroy();
+  lyraSeasonalityInstance = new Chart(document.getElementById("lyra-seasonality-chart").getContext("2d"), {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Avg Price", data, backgroundColor: "#0ABAB544", borderColor: "#0ABAB5", borderWidth: 2, borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => " avg $" + (c.parsed.y != null ? c.parsed.y.toLocaleString() : "—") + " (" + byMonth[months[c.dataIndex]].length + " days)" } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { family: CHART_FONT.family, size: 11 } } }, y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } } } }
+  });
 }
 
 function renderAllCharts() {
@@ -2324,6 +2377,7 @@ function renderAllCharts() {
   renderDayOfWeekChart();
   renderPriceDistributionChart();
   renderA7Chart();
+  renderLyraSeasonalityChart();
 }
 
 function makeInventoryChartConfig(snaps) {
@@ -3049,6 +3103,7 @@ let henrySupplyPriceInstance=null, henrySupplyPriceRecentInstance=null;
 let henryDowInvInstance=null, henryDowPriceInstance=null;
 let henryDistInstance=null;
 let henryTopPlansInstance=null, henryTopPlansRecentInstance=null;
+let henrySeasonalityInstance = null;
 
 function setHenryChartMode(mode) {
   henryChartMode = mode;
@@ -3090,6 +3145,34 @@ function makeHenryTopPlansConfig(snaps, codes) {
   return { type:"line", data:{ labels:snaps.map(s=>s.date), datasets }, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false}, plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} }, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } };
 }
 
+function renderHenrySeasonalityChart() {
+  const section = document.getElementById("henry-seasonality-section");
+  if (!section) return;
+  const byMonth = {};
+  for (const snap of henrySnapshots) {
+    const prices = Object.values(snap.units).map(u => u.minRent).filter(v => v > 0);
+    if (!prices.length) continue;
+    const parts = snap.date.split("/");
+    const key = parts[2] + "-" + String(parts[0]).padStart(2, "0");
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(prices.reduce((a, b) => a + b, 0) / prices.length);
+  }
+  const months = Object.keys(byMonth).sort();
+  if (months.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const labels = months.map(m => { const [y, mo] = m.split("-"); return MONTH_NAMES[parseInt(mo)-1] + " '" + y.slice(2); });
+  const data = months.map(m => Math.round(byMonth[m].reduce((a, b) => a + b, 0) / byMonth[m].length));
+  if (henrySeasonalityInstance) henrySeasonalityInstance.destroy();
+  henrySeasonalityInstance = new Chart(document.getElementById("henry-seasonality-chart").getContext("2d"), {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Avg Price", data, backgroundColor: "#FF009044", borderColor: "#FF0090", borderWidth: 2, borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => " avg $" + (c.parsed.y != null ? c.parsed.y.toLocaleString() : "—") + " (" + byMonth[months[c.dataIndex]].length + " days)" } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { family: CHART_FONT.family, size: 11 } } }, y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } } } }
+  });
+}
+
 function renderAllHenryCharts() {
   renderHenryInsights();
   renderHenryUnitChart();
@@ -3099,6 +3182,7 @@ function renderAllHenryCharts() {
   renderHenryDayOfWeekChart();
   renderHenryPriceDistChart();
   renderHenryTopPlansChart();
+  renderHenrySeasonalityChart();
 }
 
 function renderHenryInventoryChart() {
@@ -3527,6 +3611,7 @@ let moderaSupplyPriceInstance = null, moderaSupplyPriceRecentInstance = null;
 let moderaDowInvInstance = null, moderaDowPriceInstance = null;
 let moderaDistInstance = null;
 let moderaTopPlansInstance = null, moderaTopPlansRecentInstance = null;
+let moderaSeasonalityInstance = null;
 
 function makeModeraPriceConfig(snaps, codes) {
   const MCOLORS = ["#FF0090","#0ABAB5","#9B84B8","#f4a261","#2a9d8f","#e76f51","#457b9d","#a8dadc"];
@@ -3551,6 +3636,34 @@ function makeModeraTopPlansConfig(snaps, codes) {
   return { type:"line", data:{ labels:snaps.map(s=>s.date), datasets }, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false}, plugins:{ legend:{position:"bottom",labels:{font:CHART_FONT,padding:16,boxWidth:12,boxHeight:12}}, tooltip:{callbacks:{label:c=>" "+c.dataset.label+": $"+(c.parsed.y!=null?c.parsed.y.toLocaleString():"—")}} }, scales:{ x:{grid:{display:false},ticks:{font:{family:CHART_FONT.family,size:10},maxRotation:45,minRotation:0}}, y:{afterFit(s){s.width=68;},ticks:{font:{family:CHART_FONT.family,size:10},maxTicksLimit:6,callback:v=>"$"+v.toLocaleString()}} } } };
 }
 
+function renderModeraSeasonalityChart() {
+  const section = document.getElementById("modera-seasonality-section");
+  if (!section) return;
+  const byMonth = {};
+  for (const snap of moderaSnapshots) {
+    const prices = Object.values(snap.units).map(u => u.minRent).filter(v => v > 0);
+    if (!prices.length) continue;
+    const parts = snap.date.split("/");
+    const key = parts[2] + "-" + String(parts[0]).padStart(2, "0");
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(prices.reduce((a, b) => a + b, 0) / prices.length);
+  }
+  const months = Object.keys(byMonth).sort();
+  if (months.length < 2) { section.style.display = "none"; return; }
+  section.style.display = "";
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const labels = months.map(m => { const [y, mo] = m.split("-"); return MONTH_NAMES[parseInt(mo)-1] + " '" + y.slice(2); });
+  const data = months.map(m => Math.round(byMonth[m].reduce((a, b) => a + b, 0) / byMonth[m].length));
+  if (moderaSeasonalityInstance) moderaSeasonalityInstance.destroy();
+  moderaSeasonalityInstance = new Chart(document.getElementById("modera-seasonality-chart").getContext("2d"), {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Avg Price", data, backgroundColor: "#9B84B844", borderColor: "#9B84B8", borderWidth: 2, borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => " avg $" + (c.parsed.y != null ? c.parsed.y.toLocaleString() : "—") + " (" + byMonth[months[c.dataIndex]].length + " days)" } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { family: CHART_FONT.family, size: 11 } } }, y: { afterFit(s) { s.width = 68; }, ticks: { font: { family: CHART_FONT.family, size: 10 }, maxTicksLimit: 6, callback: v => "$" + v.toLocaleString() } } } }
+  });
+}
+
 function renderAllModeraCharts() {
   renderModeraPriceChart();
   renderModeraInventoryChart();
@@ -3559,6 +3672,7 @@ function renderAllModeraCharts() {
   renderModeraDowChart();
   renderModeraDistChart();
   renderModeraTopPlansChart();
+  renderModeraSeasonalityChart();
 }
 
 function renderModeraPriceChart() {
