@@ -3204,8 +3204,8 @@ const MODERA_GIST_FILENAME = "modera-snapshots.json";
 // Dream  = B06 corner unit (unit # ends in "01": 901, 801, 701…)
 // Top Pick = B06 non-corner OR B05
 // High Floor = floor >= 5  |  Large = sqft >= 1350
-const MODERA_DREAM_PLAN = "B06";
-const MODERA_TOP_PLANS  = ["B06"];
+const MODERA_DREAM_PLAN = "B07";
+const MODERA_TOP_PLANS  = ["B07"];
 const MODERA_LARGE_SQFT = 1200;
 
 let moderaSnapshots = [];
@@ -3441,12 +3441,12 @@ function renderModeraTable() {
     }
     if (isLarge) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#eef5e8;color:#3a7d2a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Large</span>`;
 
-    const isTooLate   = r.availDateRaw && r.availDateRaw > "2026-10-15";
+    const isTooLate    = r.availDateRaw && r.availDateRaw > "2026-10-15";
     const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
     const isLongLease  = r.leaseTerm >= 14;
-    const dateBadge = (isTooLate   ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "")
-                    + (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
-                    + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
+    const dateBadge  = isTooLate   ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "";
+    const leaseBadge = (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
+                     + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
 
     const isWatched = moderaWatched[r.code] !== undefined;
     const priceDrop = isWatched && r.minRent < moderaWatched[r.code] ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(moderaWatched[r.code]-r.minRent).toLocaleString()} since watched</span>` : "";
@@ -3468,7 +3468,7 @@ function renderModeraTable() {
       <td style="color:var(--muted);">${r.sqft ? r.sqft+" sqft" : "—"}</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
-      <td style="color:var(--muted);">${r.leaseTerm ? r.leaseTerm+" mo" : "—"}</td>
+      <td style="color:var(--muted);">${r.leaseTerm ? r.leaseTerm+" mo" : "—"}${leaseBadge}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
       <td class="date-col"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;">${r.minRent > 4000 ? `<span style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;justify-self:start;margin-left:6px;">Too High</span>` : `<span></span>`}<span><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</span><span></span></div></td>
     </tr>`;
