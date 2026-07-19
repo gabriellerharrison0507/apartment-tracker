@@ -3387,6 +3387,7 @@ function renderModeraTable() {
     minRent: u.minRent,
     prevRent: prev?.units[code]?.minRent ?? null,
     daysListed: daysListedMap[code] || 1,
+    leaseTerm: u.leaseTerm || 0,
   }));
 
   const allFloors = [...new Set(rows.map(r => r.floor))].sort((a,b) => a-b);
@@ -3438,8 +3439,12 @@ function renderModeraTable() {
     }
     if (isLarge) prefBadge += `<span class="pref-badge" style="font-size:10px;background:#eef5e8;color:#3a7d2a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Large</span>`;
 
-    const isIdealDate = r.availDateRaw && r.availDateRaw >= "2026-10-17";
-    const dateBadge = isIdealDate ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal Date</span>` : "";
+    const isTooLate   = r.availDateRaw && r.availDateRaw > "2026-10-15";
+    const isIdealLease = r.leaseTerm > 0 && r.leaseTerm <= 12;
+    const isLongLease  = r.leaseTerm >= 14;
+    const dateBadge = (isTooLate   ? `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✗ Too Late</span>` : "")
+                    + (isIdealLease ? `<span class="pref-badge" style="font-size:10px;background:#fff3cd;color:#856404;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">✓ Ideal</span>` : "")
+                    + (isLongLease  ? `<span class="pref-badge" style="font-size:10px;background:#f0e8ff;color:#6a40a5;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">Long Lease</span>` : "");
 
     const isWatched = moderaWatched[r.code] !== undefined;
     const priceDrop = isWatched && r.minRent < moderaWatched[r.code] ? `<span style="font-size:11px;color:#2a9d6a;display:block;">↓$${(moderaWatched[r.code]-r.minRent).toLocaleString()} since watched</span>` : "";

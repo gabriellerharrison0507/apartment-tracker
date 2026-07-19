@@ -108,6 +108,11 @@ def fetch_modera_units():
         avail = u.get("available_on") or ""
         rent = int(u.get("price") or 0)
         floor = floor_map.get(u["floor_id"], int(code) // 100 if code.isdigit() else 0)
+        lease_raw = u.get("display_lease_term") or ""
+        try:
+            lease_term = int(lease_raw.split()[0]) if lease_raw else 0
+        except (ValueError, IndexError):
+            lease_term = 0
 
         snapshot["units"][code] = {
             "plan": fp["plan"],
@@ -115,6 +120,7 @@ def fetch_modera_units():
             "availDate": avail,
             "minRent": rent,
             "floor": floor,
+            "leaseTerm": lease_term,
         }
 
     return snapshot
