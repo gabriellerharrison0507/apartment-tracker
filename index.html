@@ -3407,6 +3407,7 @@ function renderModeraTable() {
     else if (moderaSortCol === "sqft") cmp = a.sqft - b.sqft;
     else if (moderaSortCol === "floor") cmp = a.floor - b.floor;
     else if (moderaSortCol === "days") cmp = a.daysListed - b.daysListed;
+    else if (moderaSortCol === "lease") cmp = a.leaseTerm - b.leaseTerm;
     else cmp = a.plan !== b.plan ? a.plan.localeCompare(b.plan,undefined,{numeric:true}) : a.code.localeCompare(b.code,undefined,{numeric:true});
     return moderaSortDir === "asc" ? cmp : -cmp;
   });
@@ -3420,6 +3421,7 @@ function renderModeraTable() {
     <th style="${thS}" onclick="setModeraSortCol('sqft')">Sq Ft${moderaSortArrow('sqft')}</th>
     <th style="${thS}" onclick="setModeraSortCol('floor')">Unit${moderaSortArrow('floor')}</th>
     <th style="${thS}" onclick="setModeraSortCol('avail')">Avail Date${moderaSortArrow('avail')}</th>
+    <th style="${thS}" onclick="setModeraSortCol('lease')">Lease${moderaSortArrow('lease')}</th>
     <th style="${thS}" onclick="setModeraSortCol('days')">Days Listed${moderaSortArrow('days')}</th>
     <th class="date-col" style="${thS}" onclick="setModeraSortCol('price')">Today's Price${moderaSortArrow('price')}<br><span style="font-size:10px;font-weight:400;color:var(--muted);">${latest.date}</span></th>
   </tr></thead><tbody>`;
@@ -3466,6 +3468,7 @@ function renderModeraTable() {
       <td style="color:var(--muted);">${r.sqft ? r.sqft+" sqft" : "—"}</td>
       <td>#${r.code}</td>
       <td style="color:var(--muted);">${r.availDateFmt}${dateBadge}</td>
+      <td style="color:var(--muted);">${r.leaseTerm ? r.leaseTerm+" mo" : "—"}</td>
       <td style="color:var(--muted);">${r.daysListed}d</td>
       <td class="date-col"><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;">${r.minRent > 4000 ? `<span style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;white-space:nowrap;justify-self:start;margin-left:6px;">Too High</span>` : `<span></span>`}<span><span class="${cls}" style="font-family:var(--serif);font-size:17px;">$${r.minRent.toLocaleString()}</span>${change}${priceDrop}</span><span></span></div></td>
     </tr>`;
