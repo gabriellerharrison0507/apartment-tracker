@@ -1987,8 +1987,9 @@ function lyraLeasedBadge(plan, code) {
 function henryLeasedBadge(plan, code) {
   const floor = parseInt(String(code).replace(/^0+/,"")[0]) || 0;
   const isHighFloor = floor >= 5;
-  const isDream = HENRY_ALL_THREE.includes(plan) && isHighFloor;
-  const isTopPick = !isDream && HENRY_ALL_THREE.includes(plan);
+  const hasNoBalcony = ["A3","A5"].includes(plan);
+  const isDream = isHighFloor && !hasNoBalcony;
+  const isTopPick = !isDream && !hasNoBalcony;
   if (isDream) return `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
   if (isTopPick) return `<span class="pref-badge" style="font-size:10px;background:#fde8f0;color:#c0306a;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">♥ Top Pick</span>`;
   if (["A3","A5"].includes(plan)) return `<span class="pref-badge" style="font-size:10px;background:#fde8e8;color:#c0302a;border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:middle;">⚠ No Balcony</span>`;
@@ -2905,8 +2906,8 @@ function renderHenryTable() {
     const isHighFloor = r.floor >= 5;
     const isTooHigh = r.minRent > HENRY_PRICE_CAP;
     const hasNoBalcony = HENRY_NO_BALCONY.includes(r.plan);
-    const isDream   = HENRY_ALL_THREE.includes(r.plan) && isHighFloor;
-    const isTopPick = !isDream && HENRY_ALL_THREE.includes(r.plan);
+    const isDream   = !isTooLate && isIdealLease && isHighFloor && !hasNoBalcony;
+    const isTopPick = !isDream && isHighFloor && !hasNoBalcony;
 
     let prefBadge = "";
     if (isDream)        prefBadge = `<span class="pref-badge" style="font-size:10px;background:#FF0090;color:#fff;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;">✦ Dream</span>`;
@@ -2989,10 +2990,13 @@ function renderHenryInsights() {
 
   const dreamToday = Object.entries(latest.units).filter(([c,u]) => {
     const floor = parseInt(String(c).replace(/^0+/,"")[0]) || 0;
-    return HENRY_ALL_THREE.includes(u.plan) && floor >= 5;
+    const notTooLate = !u.availDate || u.availDate <= "2026-10-15";
+    const idealLease = u.leaseTerm > 0 && u.leaseTerm <= 12;
+    const hasBalcony = !["A3","A5"].includes(u.plan);
+    return notTooLate && idealLease && floor >= 5 && hasBalcony;
   });
   if (dreamToday.length) {
-    insights.push({icon:"✦",color:"#FF0090",bg:"#fde8f8",text:"Dream units available today: "+dreamToday.map(([c,u])=>`#${c} ${u.plan} ($${u.minRent.toLocaleString()})`).join(", ")+" — all three features on a high floor."});
+    insights.push({icon:"✦",color:"#FF0090",bg:"#fde8f8",text:"Dream units available today: "+dreamToday.map(([c,u])=>`#${c} ${u.plan} ($${u.minRent.toLocaleString()})`).join(", ")+" — ideal date, ideal lease, high floor, balcony."});
   }
 
   const underCap = Object.values(latest.units).filter(u=>u.minRent<=HENRY_PRICE_CAP).length;
@@ -3079,7 +3083,7 @@ function makeHenryTopPlansConfig(snaps, codes) {
   const datasets = codes.map(code => {
     const plan = henrySnapshots.flatMap(s=>s.units[code]?[s.units[code].plan]:[])[0]||"";
     const floor = parseInt(String(code).replace(/^0+/,"")[0])||0;
-    const isDream = HENRY_ALL_THREE.includes(plan) && floor >= 5;
+    const isDream = !["A3","A5"].includes(plan) && floor >= 5;
     const color = HCOLORS[plan] || "#888";
     return { label:"#"+code+" "+plan+(isDream?" ✦":""), data:snaps.map(s=>s.units[code]?s.units[code].minRent:null), borderColor:color, backgroundColor:color+"22", tension:0.3, spanGaps:true, pointRadius:4, pointHoverRadius:6, borderWidth:isDream?3:2 };
   });
