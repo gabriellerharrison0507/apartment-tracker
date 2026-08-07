@@ -9392,5 +9392,108 @@
         "leaseTerm": 15
       }
     }
+  },
+  {
+    "date": "8/7/2026",
+    "units": {
+      "776": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-03-28",
+        "minRent": 2151,
+        "leaseTerm": 15
+      },
+      "604": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-20",
+        "minRent": 2120,
+        "leaseTerm": 15
+      },
+      "623": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-07-23",
+        "minRent": 2247,
+        "leaseTerm": 15
+      },
+      "605": {
+        "plan": "A1",
+        "sqft": 664,
+        "availDate": "2026-08-02",
+        "minRent": 2196,
+        "leaseTerm": 15
+      },
+      "509": {
+        "plan": "A1",
+        "sqft": 664,
+        "availDate": "2026-08-07",
+        "minRent": 2350,
+        "leaseTerm": 15
+      },
+      "475": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-08-20",
+        "minRent": 1886,
+        "leaseTerm": 15
+      },
+      "359": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-08-22",
+        "minRent": 1870,
+        "leaseTerm": 15
+      },
+      "105": {
+        "plan": "A8",
+        "sqft": 838,
+        "availDate": "2026-08-27",
+        "minRent": 2148,
+        "leaseTerm": 15
+      },
+      "418": {
+        "plan": "A4",
+        "sqft": 832,
+        "availDate": "2026-09-02",
+        "minRent": 2107,
+        "leaseTerm": 15
+      },
+      "103": {
+        "plan": "A8",
+        "sqft": 838,
+        "availDate": "2026-09-04",
+        "minRent": 2097,
+        "leaseTerm": 15
+      },
+      "381": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-09-06",
+        "minRent": 1944,
+        "leaseTerm": 15
+      },
+      "423": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-09-07",
+        "minRent": 2187,
+        "leaseTerm": 15
+      },
+      "557": {
+        "plan": "A5",
+        "sqft": 757,
+        "availDate": "2026-09-09",
+        "minRent": 1935,
+        "leaseTerm": 15
+      },
+      "601": {
+        "plan": "A7",
+        "sqft": 839,
+        "availDate": "2026-10-01",
+        "minRent": 2279,
+        "leaseTerm": 15
+      }
+    }
   }
 ]
