@@ -9116,5 +9116,106 @@
         "minRent": 1665.0
       }
     }
+  },
+  {
+    "date": "9/4/2026",
+    "units": {
+      "547": {
+        "plan": "A1",
+        "sqft": 669.0,
+        "availDate": "2026-11-03",
+        "minRent": 1555.0
+      },
+      "423": {
+        "plan": "A2",
+        "sqft": 669.0,
+        "availDate": "2026-11-05",
+        "minRent": 1540.0
+      },
+      "620": {
+        "plan": "A3",
+        "sqft": 730.0,
+        "availDate": "2026-09-05",
+        "minRent": 1685.0
+      },
+      "420": {
+        "plan": "A3",
+        "sqft": 730.0,
+        "availDate": "2026-09-28",
+        "minRent": 1625.0
+      },
+      "512": {
+        "plan": "A3",
+        "sqft": 730.0,
+        "availDate": "2026-10-24",
+        "minRent": 1640.0
+      },
+      "644": {
+        "plan": "A5",
+        "sqft": 761.0,
+        "availDate": "2026-09-09",
+        "minRent": 1695.0
+      },
+      "619": {
+        "plan": "A5",
+        "sqft": 761.0,
+        "availDate": "2026-09-12",
+        "minRent": 1710.0
+      },
+      "319": {
+        "plan": "A5",
+        "sqft": 761.0,
+        "availDate": "2026-09-20",
+        "minRent": 1635.0
+      },
+      "318": {
+        "plan": "A5",
+        "sqft": 761.0,
+        "availDate": "2026-10-01",
+        "minRent": 1670.0
+      },
+      "222": {
+        "plan": "A5",
+        "sqft": 761.0,
+        "availDate": "2026-10-03",
+        "minRent": 1735.0
+      },
+      "433": {
+        "plan": "A6",
+        "sqft": 781.0,
+        "availDate": "2026-10-07",
+        "minRent": 1680.0
+      },
+      "225": {
+        "plan": "A6",
+        "sqft": 781.0,
+        "availDate": "2026-10-08",
+        "minRent": 1730.0
+      },
+      "625": {
+        "plan": "A6",
+        "sqft": 781.0,
+        "availDate": "2026-10-18",
+        "minRent": 1740.0
+      },
+      "441": {
+        "plan": "A6",
+        "sqft": 781.0,
+        "availDate": "2026-11-03",
+        "minRent": 1660.0
+      },
+      "638": {
+        "plan": "A7",
+        "sqft": 783.0,
+        "availDate": "2026-10-22",
+        "minRent": 1725.0
+      },
+      "345": {
+        "plan": "A9",
+        "sqft": 792.0,
+        "availDate": "2026-10-08",
+        "minRent": 1670.0
+      }
+    }
   }
 ]
