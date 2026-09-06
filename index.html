@@ -708,6 +708,22 @@
     <span class="items-count" id="items-count"></span>
   </div>
 
+  <div id="list-sync-bar" style="font-size:12px;color:var(--muted);padding:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#d1d5db;display:inline-block;flex-shrink:0;"></span>
+    <span id="sync-label">Not synced</span>
+    <button id="sync-connect-btn" onclick="openSyncPanel()" style="background:none;border:none;padding:0;font-size:12px;color:var(--accent);cursor:pointer;font-family:var(--sans);">Connect</button>
+    <button id="sync-disconnect-btn" onclick="clearSyncToken()" style="display:none;background:none;border:none;padding:0;font-size:12px;color:var(--muted);cursor:pointer;font-family:var(--sans);">Disconnect</button>
+  </div>
+  <div id="sync-panel" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;">Sync shopping list across devices</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Enter a GitHub personal access token with <b>gist</b> scope. Stored only in your browser.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input id="sync-token-inp" type="password" placeholder="ghp_xxxxxxxxxxxx" style="flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-family:var(--sans);font-size:13px;" />
+      <button onclick="saveSyncToken()" style="padding:7px 14px;border-radius:7px;border:none;background:var(--accent);color:white;font-family:var(--sans);font-size:13px;cursor:pointer;white-space:nowrap;">Connect</button>
+      <button onclick="document.getElementById('sync-panel').style.display='none'" style="padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:13px;cursor:pointer;color:var(--muted);">Cancel</button>
+    </div>
+  </div>
+
   <div class="items-list" id="items-list"></div>
 
   <div class="add-section">
@@ -1364,6 +1380,108 @@ let nextId = SAVED_ID ? parseInt(SAVED_ID) : 400;
 function saveData() {
   localStorage.setItem("aptTracker_data", JSON.stringify(data));
   localStorage.setItem("aptTracker_nextId", String(nextId));
+  schedulePush();
+}
+
+// ── Shopping list cloud sync ──────────────────────────────────────────────────
+const SHOPPING_GIST_FILE = "shopping-list.json";
+let shopSyncToken = localStorage.getItem("aptTracker_gistToken") || "";
+let shopPushTimer = null;
+
+function updateSyncUI(state, msg) {
+  const dot = document.getElementById("sync-dot");
+  const label = document.getElementById("sync-label");
+  const connectBtn = document.getElementById("sync-connect-btn");
+  const disconnectBtn = document.getElementById("sync-disconnect-btn");
+  if (!dot) return;
+  const colors = { ok:"#22c55e", pending:"#f59e0b", error:"#ef4444", off:"#d1d5db" };
+  dot.style.background = colors[state] || colors.off;
+  label.textContent = msg;
+  if (state === "off") { connectBtn.style.display = ""; disconnectBtn.style.display = "none"; }
+  else { connectBtn.style.display = "none"; disconnectBtn.style.display = ""; }
+}
+
+function openSyncPanel() {
+  const panel = document.getElementById("sync-panel");
+  if (panel) panel.style.display = panel.style.display === "none" ? "" : "none";
+}
+
+function saveSyncToken() {
+  const inp = document.getElementById("sync-token-inp");
+  if (!inp || !inp.value.trim()) return;
+  shopSyncToken = inp.value.trim();
+  localStorage.setItem("aptTracker_gistToken", shopSyncToken);
+  document.getElementById("sync-panel").style.display = "none";
+  updateSyncUI("pending", "Connecting...");
+  loadShoppingFromGist(true);
+}
+
+function clearSyncToken() {
+  shopSyncToken = "";
+  localStorage.removeItem("aptTracker_gistToken");
+  clearTimeout(shopPushTimer);
+  updateSyncUI("off", "Not synced");
+}
+
+async function loadShoppingFromGist(fromTokenEntry) {
+  if (!shopSyncToken) return;
+  try {
+    const url = "https://gist.githubusercontent.com/" + GIST_OWNER + "/" + GIST_ID_DEFAULT + "/raw/" + SHOPPING_GIST_FILE + "?t=" + Date.now();
+    const resp = await fetch(url, { cache: "no-store" });
+    if (!resp.ok) {
+      if (resp.status === 404 && fromTokenEntry) { await pushShoppingToGist(); return; }
+      throw new Error("HTTP " + resp.status);
+    }
+    const payload = await resp.json();
+    if (payload && payload.data) {
+      data = payload.data;
+      if (payload.nextId) nextId = payload.nextId;
+      ROOMS.forEach(r => { if (!data[r]) data[r] = []; });
+      localStorage.setItem("aptTracker_data", JSON.stringify(data));
+      localStorage.setItem("aptTracker_nextId", String(nextId));
+      renderAll();
+    }
+    updateSyncUI("ok", "Synced");
+  } catch(e) {
+    updateSyncUI("error", "Sync error");
+  }
+}
+
+async function pushShoppingToGist() {
+  if (!shopSyncToken) return;
+  updateSyncUI("pending", "Syncing...");
+  try {
+    const content = JSON.stringify({ nextId, data }, null, 2);
+    const resp = await fetch("https://api.github.com/gists/" + GIST_ID_DEFAULT, {
+      method: "PATCH",
+      headers: {
+        "Authorization": "token " + shopSyncToken,
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ files: { [SHOPPING_GIST_FILE]: { content } } })
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    updateSyncUI("ok", "Synced");
+  } catch(e) {
+    updateSyncUI("error", "Sync error — check token");
+  }
+}
+
+function schedulePush() {
+  if (!shopSyncToken) return;
+  clearTimeout(shopPushTimer);
+  updateSyncUI("pending", "Saving...");
+  shopPushTimer = setTimeout(pushShoppingToGist, 2500);
+}
+
+function initShoppingSync() {
+  if (shopSyncToken) {
+    updateSyncUI("pending", "Loading...");
+    loadShoppingFromGist(false);
+  } else {
+    updateSyncUI("off", "Not synced");
+  }
 }
 
 let activeRoom = "Kitchen", filterMode = "needed", expandedKey = null;
@@ -1664,6 +1782,7 @@ function renderAll(){
   renderSummary();
 }
 renderAll();
+initShoppingSync();
 
 // ── UNIT TRACKER ──────────────────────────────────────────────
 let unitSnapshots = [];
