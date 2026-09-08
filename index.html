@@ -1476,8 +1476,7 @@ function renderRoomHeader(){
   const owned=items.filter(i=>i.owned);
   const priced=items.filter(i=>i.price);
   const linked=items.filter(i=>i.url);
-  const trackedAll=items.filter(i=>i.url||i.price);
-  const prog=items.length?Math.round(trackedAll.length/items.length*100):0;
+  const prog=items.length?Math.round((bought.length+owned.length)/items.length*100):0;
   const theme=ROOM_THEMES[activeRoom];
   const est=roomEstRange(activeRoom);
   const actual=roomTotal(activeRoom);
@@ -1489,7 +1488,7 @@ function renderRoomHeader(){
   document.getElementById("room-est").textContent=est.lo>0?`$${est.lo.toLocaleString()}–$${est.hi.toLocaleString()}`:"—";
   document.getElementById("prog-fill").style.width=prog+"%";
   document.getElementById("prog-fill").style.background=theme.a;
-  document.getElementById("prog-label").textContent=`${prog}% tracked`;
+  document.getElementById("prog-label").textContent=`${prog}% complete`;
 }
 
 function renderHeroStats(){
