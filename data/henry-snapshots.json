@@ -16508,5 +16508,129 @@
         "leaseTerm": 15
       }
     }
+  },
+  {
+    "date": "10/23/2026",
+    "units": {
+      "373": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-08-05",
+        "minRent": 1958,
+        "leaseTerm": 15
+      },
+      "509": {
+        "plan": "A1",
+        "sqft": 664,
+        "availDate": "2026-08-07",
+        "minRent": 2371,
+        "leaseTerm": 15
+      },
+      "359": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-08-22",
+        "minRent": 1958,
+        "leaseTerm": 15
+      },
+      "381": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-09-06",
+        "minRent": 1999,
+        "leaseTerm": 15
+      },
+      "651": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-09-08",
+        "minRent": 2047,
+        "leaseTerm": 15
+      },
+      "477": {
+        "plan": "A3",
+        "sqft": 722,
+        "availDate": "2026-09-11",
+        "minRent": 1926,
+        "leaseTerm": 15
+      },
+      "677": {
+        "plan": "A3",
+        "sqft": 722,
+        "availDate": "2026-09-29",
+        "minRent": 1979,
+        "leaseTerm": 15
+      },
+      "584": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-09-29",
+        "minRent": 2300,
+        "leaseTerm": 15
+      },
+      "777": {
+        "plan": "A3",
+        "sqft": 722,
+        "availDate": "2026-10-07",
+        "minRent": 2082,
+        "leaseTerm": 15
+      },
+      "673": {
+        "plan": "A5",
+        "sqft": 768,
+        "availDate": "2026-10-12",
+        "minRent": 2091,
+        "leaseTerm": 15
+      },
+      "516": {
+        "plan": "A4",
+        "sqft": 813,
+        "availDate": "2026-10-05",
+        "minRent": 2381,
+        "leaseTerm": 15
+      },
+      "612": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-10-10",
+        "minRent": 2197,
+        "leaseTerm": 15
+      },
+      "458": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-10-21",
+        "minRent": 2157,
+        "leaseTerm": 15
+      },
+      "101": {
+        "plan": "A7",
+        "sqft": 839,
+        "availDate": "2026-10-27",
+        "minRent": 2271,
+        "leaseTerm": 15
+      },
+      "624": {
+        "plan": "A2",
+        "sqft": 710,
+        "availDate": "2026-11-06",
+        "minRent": 2197,
+        "leaseTerm": 15
+      },
+      "713": {
+        "plan": "A7",
+        "sqft": 839,
+        "availDate": "2026-11-09",
+        "minRent": 2506,
+        "leaseTerm": 15
+      },
+      "201": {
+        "plan": "A7",
+        "sqft": 839,
+        "availDate": "2026-11-15",
+        "minRent": 2191,
+        "leaseTerm": 15
+      }
+    }
   }
 ]
