@@ -4874,5 +4874,42 @@
         "leaseTerm": 15
       }
     }
+  },
+  {
+    "date": "11/12/2026",
+    "units": {
+      "509": {
+        "plan": "B05",
+        "sqft": 1419,
+        "availDate": "2026-11-12",
+        "minRent": 3096,
+        "floor": 5,
+        "leaseTerm": 15
+      },
+      "726": {
+        "plan": "B01",
+        "sqft": 981,
+        "availDate": "2026-11-12",
+        "minRent": 2451,
+        "floor": 7,
+        "leaseTerm": 15
+      },
+      "811": {
+        "plan": "B06",
+        "sqft": 1495,
+        "availDate": "2026-11-12",
+        "minRent": 3201,
+        "floor": 8,
+        "leaseTerm": 15
+      },
+      "912": {
+        "plan": "B04",
+        "sqft": 1350,
+        "availDate": "2026-11-12",
+        "minRent": 3516,
+        "floor": 9,
+        "leaseTerm": 15
+      }
+    }
   }
 ]
