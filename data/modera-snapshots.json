@@ -5224,18 +5224,18 @@
       "811": {
         "plan": "B06",
         "sqft": 1495,
-        "availDate": "2026-11-23",
-        "minRent": 3281,
+        "availDate": "2026-11-24",
+        "minRent": 3374,
         "floor": 8,
-        "leaseTerm": 15
+        "leaseTerm": 11
       },
       "912": {
         "plan": "B04",
         "sqft": 1350,
-        "availDate": "2026-11-23",
-        "minRent": 3516,
+        "availDate": "2026-11-24",
+        "minRent": 3609,
         "floor": 9,
-        "leaseTerm": 15
+        "leaseTerm": 11
       }
     }
   }
